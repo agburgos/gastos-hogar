@@ -245,7 +245,7 @@ export default function DetallePage() {
                                     {gasto.descripcion || "Sin descripción"}
                                   </div>
                                   <div className="text-[11px] text-[var(--mid)] mt-0.5">
-                                    {gasto.responsable_nombre} • {fmtDate(new Date(gasto.fecha + "T00:00:00"))}
+                                    {gasto.responsable_nombre} • {fmtDate(gasto.fecha)}
                                   </div>
                                 </div>
                                 <div className="text-right ml-2">
