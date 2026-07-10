@@ -12,10 +12,18 @@ interface GastoRaw {
   fecha: string;
   macro: string;
   categoria: string;
+  responsable: string;
+}
+
+interface ResponsableNode {
+  nombre: string;
+  porDia: Map<number, number>;
+  total: number;
 }
 
 interface CategoriaNode {
   nombre: string;
+  responsables: Map<string, ResponsableNode>;
   porDia: Map<number, number>;
   total: number;
 }
@@ -52,7 +60,8 @@ export default function DetallePage() {
         .select(
           `
           id, monto, descripcion, fecha,
-          categorias ( nombre, categorias_macro ( nombre ) )
+          categorias ( nombre, categorias_macro ( nombre ) ),
+          usuarios ( nombre )
         `
         )
         .gte("fecha", mesInicioStr)
@@ -66,6 +75,7 @@ export default function DetallePage() {
         fecha: g.fecha,
         macro: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
         categoria: g.categorias?.nombre || "Sin categoría",
+        responsable: g.usuarios?.nombre || "Desconocido",
       }));
 
       setGastosRaw(parsed);
@@ -75,7 +85,7 @@ export default function DetallePage() {
     fetch();
   }, [año, mesIdx]);
 
-  // Construir árbol macro -> categoria -> día
+  // Construir árbol macro -> categoria -> responsable -> día
   const { arbol, diasConGasto, totalPorDia, totalGeneral } = useMemo(() => {
     const arbol = new Map<string, MacroNode>();
     const totalPorDia = new Map<number, number>();
@@ -90,9 +100,26 @@ export default function DetallePage() {
       const macroNode = arbol.get(g.macro)!;
 
       if (!macroNode.categorias.has(g.categoria)) {
-        macroNode.categorias.set(g.categoria, { nombre: g.categoria, porDia: new Map(), total: 0 });
+        macroNode.categorias.set(g.categoria, {
+          nombre: g.categoria,
+          responsables: new Map(),
+          porDia: new Map(),
+          total: 0,
+        });
       }
       const catNode = macroNode.categorias.get(g.categoria)!;
+
+      if (!catNode.responsables.has(g.responsable)) {
+        catNode.responsables.set(g.responsable, {
+          nombre: g.responsable,
+          porDia: new Map(),
+          total: 0,
+        });
+      }
+      const respNode = catNode.responsables.get(g.responsable)!;
+
+      respNode.porDia.set(dia, (respNode.porDia.get(dia) || 0) + g.monto);
+      respNode.total += g.monto;
 
       catNode.porDia.set(dia, (catNode.porDia.get(dia) || 0) + g.monto);
       catNode.total += g.monto;
@@ -122,7 +149,10 @@ export default function DetallePage() {
     const keys = new Set<string>();
     macrosOrdenados.forEach((m) => {
       keys.add(m.nombre);
-      m.categorias.forEach((c) => keys.add(`${m.nombre}__${c.nombre}`));
+      m.categorias.forEach((c) => {
+        const catKey = `${m.nombre}__${c.nombre}`;
+        keys.add(catKey);
+      });
     });
     setExpandidos(keys);
   };
@@ -212,9 +242,12 @@ export default function DetallePage() {
               <tr className="bg-[var(--gradient)] text-white sticky top-0">
                 <th
                   className="text-left px-3 py-2 font-bold sticky left-0 bg-[var(--accent)] z-10"
-                  style={{ minWidth: 180 }}
+                  style={{ minWidth: 150 }}
                 >
                   Categoría
+                </th>
+                <th className="text-left px-2 py-2 font-bold" style={{ minWidth: 100 }}>
+                  Responsable
                 </th>
                 <th className="text-right px-3 py-2 font-bold" style={{ minWidth: colWidth }}>
                   Total
@@ -242,11 +275,12 @@ export default function DetallePage() {
                     >
                       <td
                         className="px-3 py-2 font-bold sticky left-0 bg-[var(--accent-bg)] z-10"
-                        style={{ minWidth: 180 }}
+                        style={{ minWidth: 150 }}
                       >
                         <span className="mr-1">{macroExpanded ? "▼" : "▶"}</span>
                         {macro.nombre}
                       </td>
+                      <td className="px-2 py-2"></td>
                       <td className="text-right px-3 py-2 font-bold">{fmt(macro.total)}</td>
                       {diasConGasto.map((dia) => (
                         <td key={dia} className="text-right px-2 py-2">
@@ -259,25 +293,60 @@ export default function DetallePage() {
                     {macroExpanded &&
                       categoriasOrdenadas.map((cat) => {
                         const catKey = `${macro.nombre}__${cat.nombre}`;
+                        const catExpanded = expandidos.has(catKey);
+                        const responsablesOrdenados = Array.from(cat.responsables.values()).sort(
+                          (a, b) => a.nombre.localeCompare(b.nombre)
+                        );
+
                         return (
-                          <tr
-                            key={catKey}
-                            onClick={() => toggle(catKey)}
-                            className="cursor-pointer hover:bg-[var(--accent-bg)]/20 border-t border-[var(--border)]/50"
-                          >
-                            <td
-                              className="px-3 py-1.5 pl-8 sticky left-0 bg-white z-10 text-[var(--charcoal)]"
-                              style={{ minWidth: 180 }}
+                          <React.Fragment key={catKey}>
+                            <tr
+                              onClick={() => toggle(catKey)}
+                              className="cursor-pointer hover:bg-[var(--accent-bg)]/20 border-t border-[var(--border)]/50"
                             >
-                              {cat.nombre}
-                            </td>
-                            <td className="text-right px-3 py-1.5 font-semibold">{fmt(cat.total)}</td>
-                            {diasConGasto.map((dia) => (
-                              <td key={dia} className="text-right px-2 py-1.5 text-[var(--mid)]">
-                                {cat.porDia.get(dia) ? fmt(cat.porDia.get(dia)!) : ""}
+                              <td
+                                className="px-3 py-1.5 pl-8 sticky left-0 bg-white z-10 text-[var(--charcoal)]"
+                                style={{ minWidth: 150 }}
+                              >
+                                <span className="mr-1 text-[10px]">{catExpanded ? "▼" : "▶"}</span>
+                                {cat.nombre}
                               </td>
-                            ))}
-                          </tr>
+                              <td className="px-2 py-1.5"></td>
+                              <td className="text-right px-3 py-1.5 font-semibold">{fmt(cat.total)}</td>
+                              {diasConGasto.map((dia) => (
+                                <td key={dia} className="text-right px-2 py-1.5 text-[var(--mid)]">
+                                  {cat.porDia.get(dia) ? fmt(cat.porDia.get(dia)!) : ""}
+                                </td>
+                              ))}
+                            </tr>
+
+                            {/* Filas de responsable (si categoría expandida), ordenadas alfabéticamente */}
+                            {catExpanded &&
+                              responsablesOrdenados.map((resp) => (
+                                <tr
+                                  key={`${catKey}__${resp.nombre}`}
+                                  className="border-t border-[var(--border)]/30 bg-[var(--linen)]/40"
+                                >
+                                  <td
+                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--linen)] z-10 text-[11px] text-[var(--mid)]"
+                                    style={{ minWidth: 150 }}
+                                  >
+                                    —
+                                  </td>
+                                  <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
+                                    {resp.nombre}
+                                  </td>
+                                  <td className="text-right px-3 py-1 text-[11px] font-semibold">
+                                    {fmt(resp.total)}
+                                  </td>
+                                  {diasConGasto.map((dia) => (
+                                    <td key={dia} className="text-right px-2 py-1 text-[11px] text-[var(--mid)]">
+                                      {resp.porDia.get(dia) ? fmt(resp.porDia.get(dia)!) : ""}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                          </React.Fragment>
                         );
                       })}
                   </React.Fragment>
@@ -286,9 +355,10 @@ export default function DetallePage() {
             </tbody>
             <tfoot>
               <tr className="bg-[var(--charcoal)] text-white border-t-2 border-[var(--accent)] sticky bottom-0">
-                <td className="px-3 py-2 font-bold sticky left-0 bg-[var(--charcoal)] z-10" style={{ minWidth: 180 }}>
+                <td className="px-3 py-2 font-bold sticky left-0 bg-[var(--charcoal)] z-10" style={{ minWidth: 150 }}>
                   TOTAL
                 </td>
+                <td className="px-2 py-2"></td>
                 <td className="text-right px-3 py-2 font-bold">{fmt(totalGeneral)}</td>
                 {diasConGasto.map((dia) => (
                   <td key={dia} className="text-right px-2 py-2 font-bold">
