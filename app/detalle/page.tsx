@@ -40,11 +40,14 @@ const MESES = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
+const DIAS_SEMANA = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
 export default function DetallePage() {
   const [año, setAño] = useState(new Date().getFullYear());
   const [mesIdx, setMesIdx] = useState(new Date().getMonth()); // 0-11
   const [gastosRaw, setGastosRaw] = useState<GastoRaw[]>([]);
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
+  const [soloDiasConGasto, setSoloDiasConGasto] = useState(true);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -136,6 +139,18 @@ export default function DetallePage() {
     return { arbol, diasConGasto, totalPorDia, totalGeneral };
   }, [gastosRaw]);
 
+  // Días a mostrar: todos los del mes (calendario real) o solo los que tienen gasto
+  const diasDelMes = useMemo(() => {
+    const totalDias = new Date(año, mesIdx + 1, 0).getDate();
+    const todos = Array.from({ length: totalDias }, (_, i) => i + 1);
+    return soloDiasConGasto ? todos.filter((d) => diasConGasto.includes(d)) : todos;
+  }, [año, mesIdx, diasConGasto, soloDiasConGasto]);
+
+  const nombreDia = (dia: number) => {
+    const fecha = new Date(año, mesIdx, dia);
+    return DIAS_SEMANA[fecha.getDay()];
+  };
+
   const macrosOrdenados = Array.from(arbol.values()).sort((a, b) => b.total - a.total);
 
   const toggle = (key: string) => {
@@ -208,8 +223,8 @@ export default function DetallePage() {
 
       {/* Expandir/Contraer todo + Total */}
       <Card accent>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={expandirTodo}
               className="px-3 py-1.5 rounded-lg bg-[var(--accent-bg)] text-[var(--accent)] text-[12px] font-bold"
@@ -221,6 +236,12 @@ export default function DetallePage() {
               className="px-3 py-1.5 rounded-lg bg-[var(--accent-bg)] text-[var(--accent)] text-[12px] font-bold"
             >
               Contraer todo
+            </button>
+            <button
+              onClick={() => setSoloDiasConGasto(!soloDiasConGasto)}
+              className="px-3 py-1.5 rounded-lg bg-[var(--accent-bg)] text-[var(--accent)] text-[12px] font-bold"
+            >
+              {soloDiasConGasto ? "Expandir días ↔" : "Contraer días ↔"}
             </button>
           </div>
           <div className="text-right">
@@ -252,9 +273,12 @@ export default function DetallePage() {
                 <th className="text-right px-3 py-2 font-bold" style={{ minWidth: colWidth }}>
                   Total
                 </th>
-                {diasConGasto.map((dia) => (
+                {diasDelMes.map((dia) => (
                   <th key={dia} className="text-right px-2 py-2 font-bold" style={{ minWidth: colWidth }}>
-                    {dia}
+                    <div className="leading-tight">
+                      <div className="text-[10px] font-normal opacity-80 capitalize">{nombreDia(dia)}</div>
+                      <div>{dia}</div>
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -282,7 +306,7 @@ export default function DetallePage() {
                       </td>
                       <td className="px-2 py-2"></td>
                       <td className="text-right px-3 py-2 font-bold">{fmt(macro.total)}</td>
-                      {diasConGasto.map((dia) => (
+                      {diasDelMes.map((dia) => (
                         <td key={dia} className="text-right px-2 py-2">
                           {macro.porDia.get(dia) ? fmt(macro.porDia.get(dia)!) : ""}
                         </td>
@@ -313,7 +337,7 @@ export default function DetallePage() {
                               </td>
                               <td className="px-2 py-1.5"></td>
                               <td className="text-right px-3 py-1.5 font-semibold">{fmt(cat.total)}</td>
-                              {diasConGasto.map((dia) => (
+                              {diasDelMes.map((dia) => (
                                 <td key={dia} className="text-right px-2 py-1.5 text-[var(--mid)]">
                                   {cat.porDia.get(dia) ? fmt(cat.porDia.get(dia)!) : ""}
                                 </td>
@@ -339,7 +363,7 @@ export default function DetallePage() {
                                   <td className="text-right px-3 py-1 text-[11px] font-semibold">
                                     {fmt(resp.total)}
                                   </td>
-                                  {diasConGasto.map((dia) => (
+                                  {diasDelMes.map((dia) => (
                                     <td key={dia} className="text-right px-2 py-1 text-[11px] text-[var(--mid)]">
                                       {resp.porDia.get(dia) ? fmt(resp.porDia.get(dia)!) : ""}
                                     </td>
@@ -360,7 +384,7 @@ export default function DetallePage() {
                 </td>
                 <td className="px-2 py-2"></td>
                 <td className="text-right px-3 py-2 font-bold">{fmt(totalGeneral)}</td>
-                {diasConGasto.map((dia) => (
+                {diasDelMes.map((dia) => (
                   <td key={dia} className="text-right px-2 py-2 font-bold">
                     {fmt(totalPorDia.get(dia) || 0)}
                   </td>
