@@ -96,24 +96,31 @@ export default function DashboardPage() {
       setGloria(gloriaGastó);
       setAlberto(albertoGastó);
 
-      // Traer deudas totales por responsable
+      // Traer deudas (deudor/acreedor) — deuda neta que cada uno debe (descontando lo que le deben)
       const { data: deudas } = await supabase
-        .from("deudas")
-        .select("responsable_id, saldo_pendiente");
+        .from("deuda_saldos")
+        .select("responsable_id, acreedor_id, saldo_pendiente");
 
-      let gloriaDeudas = 0;
-      let albertoDeudas = 0;
+      let gloriaDebeNeto = 0;
+      let albertoDebeNeto = 0;
 
       deudas?.forEach((d: any) => {
+        const saldo = d.saldo_pendiente || 0;
+        if (saldo <= 0) return;
         if (d.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
-          gloriaDeudas += d.saldo_pendiente || 0;
+          gloriaDebeNeto += saldo;
         } else if (d.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
-          albertoDeudas += d.saldo_pendiente || 0;
+          albertoDebeNeto += saldo;
+        }
+        if (d.acreedor_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
+          gloriaDebeNeto -= saldo;
+        } else if (d.acreedor_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
+          albertoDebeNeto -= saldo;
         }
       });
 
-      setDeudasGloria(gloriaDeudas);
-      setDeudasAlberto(albertoDeudas);
+      setDeudasGloria(gloriaDebeNeto);
+      setDeudasAlberto(albertoDebeNeto);
 
       // Alertas por subcategoría (con presupuesto propio: pct_objetivo o monto_objetivo)
       const { data: subs } = await supabase

@@ -14,6 +14,7 @@ interface GastoRaw {
   categoria: string;
   categoria_id: string;
   responsable: string;
+  ambito: string;
 }
 
 interface ResponsableNode {
@@ -69,7 +70,7 @@ export default function DetallePage() {
       .from("gastos")
       .select(
         `
-        id, monto, descripcion, fecha, categoria_id,
+        id, monto, descripcion, fecha, categoria_id, ambito,
         categorias ( nombre, categorias_macro ( nombre ) ),
         usuarios ( nombre )
       `
@@ -86,6 +87,7 @@ export default function DetallePage() {
       macro: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
       categoria: g.categorias?.nombre || "Sin categoría",
       categoria_id: g.categoria_id,
+      ambito: g.ambito || "ninguno",
       responsable: g.usuarios?.nombre || "Desconocido",
     }));
 
@@ -178,6 +180,14 @@ export default function DetallePage() {
 
   const macrosOrdenados = Array.from(arbol.values()).sort((a, b) => b.total - a.total);
 
+  const totalesPorResponsable = useMemo(() => {
+    const totales = new Map<string, number>();
+    gastosRaw.forEach((g) => {
+      totales.set(g.responsable, (totales.get(g.responsable) || 0) + g.monto);
+    });
+    return totales;
+  }, [gastosRaw]);
+
   const toggle = (key: string) => {
     const newSet = new Set(expandidos);
     if (newSet.has(key)) newSet.delete(key);
@@ -248,6 +258,20 @@ export default function DetallePage() {
           </button>
         </div>
       </Card>
+
+      {/* Cajas de total por responsable */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card title="Gloria">
+          <div className="text-[20px] font-bold text-[var(--accent)]">
+            {fmt(totalesPorResponsable.get("Gloria Roa") || 0)}
+          </div>
+        </Card>
+        <Card title="Alberto">
+          <div className="text-[20px] font-bold text-[var(--accent)]">
+            {fmt(totalesPorResponsable.get("Alberto Garrido") || 0)}
+          </div>
+        </Card>
+      </div>
 
       {/* Expandir/Contraer todo + Total */}
       <Card accent>
@@ -499,17 +523,24 @@ function ModalGastosCelda({
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [montoEdit, setMontoEdit] = useState("");
   const [descEdit, setDescEdit] = useState("");
+  const [ambitoEdit, setAmbitoEdit] = useState("ninguno");
 
   const iniciarEdicion = (g: GastoRaw) => {
     setEditandoId(g.id);
     setMontoEdit(String(g.monto));
     setDescEdit(g.descripcion || "");
+    setAmbitoEdit(g.ambito || "ninguno");
   };
 
   const guardarEdicion = async (id: string) => {
+    if (!descEdit.trim()) {
+      alert("El título es obligatorio");
+      return;
+    }
+
     const { error } = await supabase
       .from("gastos")
-      .update({ monto: parseFloat(montoEdit), descripcion: descEdit || null })
+      .update({ monto: parseFloat(montoEdit), descripcion: descEdit, ambito: ambitoEdit })
       .eq("id", id);
 
     if (error) {
@@ -574,8 +605,19 @@ function ModalGastosCelda({
                     value={descEdit}
                     onChange={(e) => setDescEdit(e.target.value)}
                     className="w-full px-2 py-1.5 border border-[var(--border)] rounded text-[13px]"
-                    placeholder="Descripción"
+                    placeholder="Título (obligatorio)"
+                    required
                   />
+                  <select
+                    value={ambitoEdit}
+                    onChange={(e) => setAmbitoEdit(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-[var(--border)] rounded text-[13px]"
+                  >
+                    <option value="ninguno">Ámbito: Ninguno</option>
+                    <option value="casa">Ámbito: Casa</option>
+                    <option value="parcela">Ámbito: Parcela</option>
+                    <option value="ambos">Ámbito: Ambos</option>
+                  </select>
                   <div className="flex gap-2">
                     <button
                       onClick={() => guardarEdicion(g.id)}

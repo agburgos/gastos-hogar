@@ -16,12 +16,20 @@ interface Categoria {
   nombre: string;
 }
 
+const AMBITOS = [
+  { value: "ninguno", label: "Ninguno" },
+  { value: "casa", label: "Casa" },
+  { value: "parcela", label: "Parcela" },
+  { value: "ambos", label: "Ambos" },
+];
+
 export default function NuevoPage() {
   const router = useRouter();
   const [monto, setMonto] = useState("");
   const [fecha, setFecha] = useState(ymdLocal(new Date()));
   const [compartido, setCompartido] = useState(true);
   const [descripcion, setDescripcion] = useState("");
+  const [ambito, setAmbito] = useState("ninguno");
   const [macroSeleccionada, setMacroSeleccionada] = useState<string | null>(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [cuotas, setCuotas] = useState(false);
@@ -69,6 +77,11 @@ export default function NuevoPage() {
       return;
     }
 
+    if (!descripcion.trim()) {
+      alert("El título del gasto es obligatorio");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -89,6 +102,7 @@ export default function NuevoPage() {
             responsable_id: user,
             fecha: ymdLocal(nextFecha),
             compartido,
+            ambito,
             cuota_grupo_id: cuotaGrupoId,
             cuota_numero: i + 1,
             cuota_total: numCuotas,
@@ -102,6 +116,7 @@ export default function NuevoPage() {
           responsable_id: user,
           fecha,
           compartido,
+          ambito,
         });
       }
 
@@ -259,15 +274,36 @@ export default function NuevoPage() {
         </Card>
       )}
 
-      {/* Descripción */}
-      <Card title="Descripción (opcional)">
-        <textarea
+      {/* Título (obligatorio) */}
+      <Card title="Título del gasto *">
+        <input
+          type="text"
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           placeholder="Ej: Supermercado D&S"
-          className="w-full text-[14px] bg-transparent border-b-2 border-[var(--border)] focus:border-[var(--accent)] focus:outline-none pb-2 resize-none"
-          rows={2}
+          required
+          className="w-full text-[14px] bg-transparent border-b-2 border-[var(--accent)] focus:outline-none pb-2"
         />
+      </Card>
+
+      {/* Ámbito: casa, parcela, ambos, ninguno */}
+      <Card title="Ámbito">
+        <div className="flex flex-wrap gap-2">
+          {AMBITOS.map((a) => (
+            <button
+              key={a.value}
+              type="button"
+              onClick={() => setAmbito(a.value)}
+              className={`flex-1 min-w-[45%] px-3 py-2 rounded-lg font-bold text-[13px] transition-colors ${
+                ambito === a.value
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--accent-bg)] text-[var(--accent)]"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
       </Card>
 
       {/* Resumen antes de guardar */}
@@ -284,7 +320,7 @@ export default function NuevoPage() {
       )}
 
       {/* Botón enviar */}
-      <Btn type="submit" disabled={loading || !monto || !categoriaSeleccionada}>
+      <Btn type="submit" disabled={loading || !monto || !categoriaSeleccionada || !descripcion.trim()}>
         {loading ? "Guardando..." : "Guardar"}
       </Btn>
     </form>
