@@ -72,12 +72,14 @@ Completado:
 - ✓ Balance (app/balance/page.tsx → Gloria/Alberto, deuda)
 - ✓ Revisar (app/revisar/page.tsx → reclasificar gastos sin categoría)
 - ✓ Ajustes (app/ajustes/page.tsx → ingreso, push, logout)
+- ✓ Migración del Excel histórico: **122 gastos cargados** (2022-2026)
+- ✓ Deployed to Vercel (awaiting env vars)
 
 Pendiente:
 
-- Migración del Excel histórico (scripts/migrar-excel.ts)
 - Notificaciones Push PWA (VAPID, service worker, API endpoints)
 - Polish: PWA icons, manifest, install prompts
+- Fine-tune Excel migration (algunas hojas con estructura inconsistente)
 
 ---
 
