@@ -216,7 +216,10 @@ export default function DetallePage() {
   const colWidth = 72;
 
   return (
-    <div className="space-y-3">
+    <div
+      className="space-y-3 w-screen relative left-1/2 -translate-x-1/2 max-w-none px-4"
+      style={{ maxWidth: "100vw" }}
+    >
       {/* Navegación de mes */}
       <Card>
         <div className="flex items-center justify-between">
