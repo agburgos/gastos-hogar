@@ -120,7 +120,7 @@ const supabase = createClient(url, key, {
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       const correlativo = row[0];
-      const dia = row[1];
+      let dia = row[1];
       const descripcion = row[2];
       const categoriaOriginal = row[3];
       const monto = row[4];
@@ -132,7 +132,39 @@ const supabase = createClient(url, key, {
       // Validar datos
       if (!dia || !monto) continue;
 
-      const diaStr = String(dia).padStart(2, "0");
+      // Parsear día (puede ser número de Excel, texto, o string)
+      let diaNum = 0;
+      if (typeof dia === "number") {
+        if (dia > 100) {
+          // Número de Excel: convertir a fecha
+          const excelDate = new Date((dia - 25569) * 86400 * 1000);
+          diaNum = excelDate.getDate();
+        } else {
+          diaNum = Math.floor(dia);
+        }
+      } else if (typeof dia === "string") {
+        // Extraer número del string (ej: "27/03" -> 27)
+        const match = String(dia).match(/^(\d+)/);
+        if (match) {
+          diaNum = parseInt(match[1]);
+        }
+      }
+
+      // Validar que el día sea válido según el mes
+      const diasPorMes: Record<string, number> = {
+        "01": 31, "02": 28, "03": 31, "04": 30, "05": 31, "06": 30,
+        "07": 31, "08": 31, "09": 30, "10": 31, "11": 30, "12": 31
+      };
+
+      // Ajustar febrero para años bisiestos
+      if (mesNum === "02" && (parseInt(año) % 4 === 0 && parseInt(año) % 100 !== 0 || parseInt(año) % 400 === 0)) {
+        diasPorMes["02"] = 29;
+      }
+
+      const diasMes = diasPorMes[mesNum] || 31;
+      if (diaNum < 1 || diaNum > diasMes) continue;
+
+      const diaStr = String(diaNum).padStart(2, "0");
       const fecha = `${año}-${mesNum}-${diaStr}`;
 
       // Mapear responsable
