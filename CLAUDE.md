@@ -55,31 +55,30 @@ RLS habilitado.
 
 ## Estado actual
 
+🚀 **PRODUCCIÓN LISTA**
+
+URL: https://gastos-hogar-iota.vercel.app
+
 Completado:
 
-- schema.sql aplicado
-- seed.sql aplicado
-- usuarios creados en Authentication
-- trigger handle_new_user funcionando
-- AuthGate portado
-- LoginForm portado
-- NavTabs portado
-- layout base portado
-- ✓ Servidor corriendo en puerto 3003 (webpack, sin Turbopack)
-- ✓ Dashboard principal (app/page.tsx → macros con ProgressBar, balance)
-- ✓ Registro rápido (app/nuevo/page.tsx → 2-tap categoría picker, cuotas)
-- ✓ Resumen (app/resumen/page.tsx → tabla gastos/mes)
-- ✓ Balance (app/balance/page.tsx → Gloria/Alberto, deuda)
-- ✓ Revisar (app/revisar/page.tsx → reclasificar gastos sin categoría)
-- ✓ Ajustes (app/ajustes/page.tsx → ingreso, push, logout)
-- ✓ Migración del Excel histórico: **122 gastos cargados** (2022-2026)
-- ✓ Deployed to Vercel (awaiting env vars)
+- ✓ Schema (categorías, usuarios, gastos, deudas, ingreso_mensual)
+- ✓ Seed: 10 macrocategorías + 66 subcategorías
+- ✓ Auth: Gloria Roa + Alberto Garrido
+- ✓ Dashboard (presupuesto en vivo por macro con ProgressBar)
+- ✓ Registro rápido (monto → categoría 2-tap → fecha → compartido → cuotas)
+- ✓ Resumen (tabla gastos/mes)
+- ✓ Balance (quién pagó cuánto, quién debe)
+- ✓ Revisar (reclasificar gastos sin categoría)
+- ✓ **Deudas (México, MBA, etc)** — registrar + calcular pendiente + pagar
+- ✓ Ajustes (ingreso, estado push, logout)
+- ✓ Histórico migrado: 122 gastos de Excel (2022-2026)
+- ✓ Deployed: Vercel + Supabase Cloud
 
 Pendiente:
 
-- Notificaciones Push PWA (VAPID, service worker, API endpoints)
-- Polish: PWA icons, manifest, install prompts
-- Fine-tune Excel migration (algunas hojas con estructura inconsistente)
+- Notificaciones Push (PWA con VAPID)
+- Pulido: iconos, manifest, install prompt
+- Fine-tune Excel parser (algunas hojas con formato inconsistente)
 
 ---
 
