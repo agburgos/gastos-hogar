@@ -251,9 +251,7 @@ export default function DetallePage() {
                                 <div className="text-right ml-2">
                                   <div className="font-bold">{fmt(gasto.monto)}</div>
                                   {!gasto.compartido && (
-                                    <Badge color="gray" className="text-[10px]">
-                                      Personal
-                                    </Badge>
+                                    <Badge color="gray">Personal</Badge>
                                   )}
                                 </div>
                               </div>
