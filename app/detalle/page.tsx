@@ -12,6 +12,7 @@ interface GastoRaw {
   fecha: string;
   macro: string;
   categoria: string;
+  categoria_id: string;
   responsable: string;
 }
 
@@ -50,43 +51,50 @@ export default function DetallePage() {
   const [soloDiasConGasto, setSoloDiasConGasto] = useState(true);
   const [pending, setPending] = useState(true);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [celdaSeleccionada, setCeldaSeleccionada] = useState<{
+    macro: string;
+    categoria: string;
+    responsable: string;
+    dia: number;
+  } | null>(null);
+
+  const fetchGastos = async () => {
+    setPending(true);
+    const mesInicio = new Date(año, mesIdx, 1);
+    const mesFin = new Date(año, mesIdx + 1, 1);
+    const mesInicioStr = mesInicio.toISOString().slice(0, 10);
+    const mesFinStr = mesFin.toISOString().slice(0, 10);
+
+    const { data } = await supabase
+      .from("gastos")
+      .select(
+        `
+        id, monto, descripcion, fecha, categoria_id,
+        categorias ( nombre, categorias_macro ( nombre ) ),
+        usuarios ( nombre )
+      `
+      )
+      .gte("fecha", mesInicioStr)
+      .lt("fecha", mesFinStr)
+      .order("fecha", { ascending: true });
+
+    const parsed: GastoRaw[] = (data || []).map((g: any) => ({
+      id: g.id,
+      monto: g.monto,
+      descripcion: g.descripcion,
+      fecha: g.fecha,
+      macro: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
+      categoria: g.categorias?.nombre || "Sin categoría",
+      categoria_id: g.categoria_id,
+      responsable: g.usuarios?.nombre || "Desconocido",
+    }));
+
+    setGastosRaw(parsed);
+    setPending(false);
+  };
 
   useEffect(() => {
-    const fetch = async () => {
-      setPending(true);
-      const mesInicio = new Date(año, mesIdx, 1);
-      const mesFin = new Date(año, mesIdx + 1, 1);
-      const mesInicioStr = mesInicio.toISOString().slice(0, 10);
-      const mesFinStr = mesFin.toISOString().slice(0, 10);
-
-      const { data } = await supabase
-        .from("gastos")
-        .select(
-          `
-          id, monto, descripcion, fecha,
-          categorias ( nombre, categorias_macro ( nombre ) ),
-          usuarios ( nombre )
-        `
-        )
-        .gte("fecha", mesInicioStr)
-        .lt("fecha", mesFinStr)
-        .order("fecha", { ascending: true });
-
-      const parsed: GastoRaw[] = (data || []).map((g: any) => ({
-        id: g.id,
-        monto: g.monto,
-        descripcion: g.descripcion,
-        fecha: g.fecha,
-        macro: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
-        categoria: g.categorias?.nombre || "Sin categoría",
-        responsable: g.usuarios?.nombre || "Desconocido",
-      }));
-
-      setGastosRaw(parsed);
-      setPending(false);
-    };
-
-    fetch();
+    fetchGastos();
   }, [año, mesIdx]);
 
   // Construir árbol macro -> categoria -> responsable -> día
@@ -406,11 +414,28 @@ export default function DetallePage() {
                                   <td className="text-right px-3 py-1 text-[11px] font-semibold">
                                     {fmt(resp.total)}
                                   </td>
-                                  {diasDelMes.map((dia) => (
-                                    <td key={dia} className="text-right px-2 py-1 text-[11px] text-[var(--mid)]">
-                                      {resp.porDia.get(dia) ? fmt(resp.porDia.get(dia)!) : ""}
-                                    </td>
-                                  ))}
+                                  {diasDelMes.map((dia) => {
+                                    const monto = resp.porDia.get(dia);
+                                    return (
+                                      <td
+                                        key={dia}
+                                        onClick={() =>
+                                          monto &&
+                                          setCeldaSeleccionada({
+                                            macro: macro.nombre,
+                                            categoria: cat.nombre,
+                                            responsable: resp.nombre,
+                                            dia,
+                                          })
+                                        }
+                                        className={`text-right px-2 py-1 text-[11px] text-[var(--mid)] ${
+                                          monto ? "cursor-pointer underline decoration-dotted hover:bg-[var(--accent-bg)]" : ""
+                                        }`}
+                                      >
+                                        {monto ? fmt(monto) : ""}
+                                      </td>
+                                    );
+                                  })}
                                 </tr>
                               ))}
                           </React.Fragment>
@@ -438,6 +463,165 @@ export default function DetallePage() {
           </div>
         </>
       )}
+
+      {/* Modal editar/eliminar gastos de la celda seleccionada */}
+      {celdaSeleccionada && (
+        <ModalGastosCelda
+          celda={celdaSeleccionada}
+          gastosRaw={gastosRaw}
+          onCerrar={() => setCeldaSeleccionada(null)}
+          onCambio={fetchGastos}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalGastosCelda({
+  celda,
+  gastosRaw,
+  onCerrar,
+  onCambio,
+}: {
+  celda: { macro: string; categoria: string; responsable: string; dia: number };
+  gastosRaw: GastoRaw[];
+  onCerrar: () => void;
+  onCambio: () => void;
+}) {
+  const gastosDeLaCelda = gastosRaw.filter(
+    (g) =>
+      g.macro === celda.macro &&
+      g.categoria === celda.categoria &&
+      g.responsable === celda.responsable &&
+      parseInt(g.fecha.slice(8, 10)) === celda.dia
+  );
+
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [montoEdit, setMontoEdit] = useState("");
+  const [descEdit, setDescEdit] = useState("");
+
+  const iniciarEdicion = (g: GastoRaw) => {
+    setEditandoId(g.id);
+    setMontoEdit(String(g.monto));
+    setDescEdit(g.descripcion || "");
+  };
+
+  const guardarEdicion = async (id: string) => {
+    const { error } = await supabase
+      .from("gastos")
+      .update({ monto: parseFloat(montoEdit), descripcion: descEdit || null })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error al editar: " + error.message);
+      return;
+    }
+
+    setEditandoId(null);
+    onCambio();
+  };
+
+  const eliminarGasto = async (id: string) => {
+    if (!confirm("¿Eliminar este gasto?")) return;
+
+    const { error } = await supabase.from("gastos").delete().eq("id", id);
+
+    if (error) {
+      alert("Error al eliminar: " + error.message);
+      return;
+    }
+
+    onCambio();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+      onClick={onCerrar}
+    >
+      <div
+        className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto p-4 space-y-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="font-bold text-[14px]">{celda.categoria}</div>
+            <div className="text-[12px] text-[var(--mid)]">
+              {celda.responsable} • día {celda.dia}
+            </div>
+          </div>
+          <button onClick={onCerrar} className="text-[var(--mid)] text-[18px]">
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {gastosDeLaCelda.length === 0 ? (
+            <div className="text-[13px] text-[var(--mid)] text-center py-4">Sin gastos</div>
+          ) : (
+            gastosDeLaCelda.map((g) =>
+              editandoId === g.id ? (
+                <div key={g.id} className="border border-[var(--accent)] rounded-lg p-2 space-y-2">
+                  <input
+                    type="number"
+                    value={montoEdit}
+                    onChange={(e) => setMontoEdit(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-[var(--border)] rounded text-[13px]"
+                    placeholder="Monto"
+                  />
+                  <input
+                    type="text"
+                    value={descEdit}
+                    onChange={(e) => setDescEdit(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-[var(--border)] rounded text-[13px]"
+                    placeholder="Descripción"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => guardarEdicion(g.id)}
+                      className="flex-1 px-2 py-1.5 bg-[var(--green-bg)] text-[var(--green)] rounded text-[12px] font-bold"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={() => setEditandoId(null)}
+                      className="px-3 py-1.5 bg-[var(--accent-bg)] text-[var(--mid)] rounded text-[12px] font-bold"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  key={g.id}
+                  className="flex justify-between items-center border border-[var(--border)] rounded-lg p-2"
+                >
+                  <div>
+                    <div className="font-bold text-[13px]">{fmt(g.monto)}</div>
+                    <div className="text-[11px] text-[var(--mid)]">
+                      {g.descripcion || "Sin descripción"}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => iniciarEdicion(g)}
+                      className="text-[11px] px-2 py-1 bg-[var(--accent-bg)] text-[var(--accent)] rounded font-bold"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => eliminarGasto(g.id)}
+                      className="text-[11px] px-2 py-1 bg-[var(--red-bg)] text-[var(--red)] rounded font-bold"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              )
+            )
+          )}
+        </div>
+      </div>
     </div>
   );
 }

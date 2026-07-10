@@ -42,7 +42,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavTabs nombre={nombre ?? session.user.email ?? ""} />
-      <div className="max-w-[480px] w-full mx-auto px-4 pt-4 pb-10">{children}</div>
+      <div className="max-w-[480px] lg:max-w-6xl w-full mx-auto px-4 pt-4 pb-10">{children}</div>
     </>
   );
 }

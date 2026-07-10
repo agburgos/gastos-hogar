@@ -21,7 +21,7 @@ export default function NavTabs({ nombre }: { nombre: string }) {
   return (
     <>
       <nav className="sticky top-0 z-50" style={{ background: "var(--gradient)" }}>
-        <div className="max-w-[480px] mx-auto flex items-center justify-between px-4 py-3.5">
+        <div className="max-w-[480px] lg:max-w-full mx-auto flex items-center justify-between px-4 py-3.5">
           <div className="leading-tight">
             <div className="text-[17px] font-extrabold tracking-tight text-white drop-shadow-sm">
               Gastos Hogar

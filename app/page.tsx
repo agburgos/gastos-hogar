@@ -13,6 +13,14 @@ interface MacroData {
   total_gastado: number;
 }
 
+interface SubAlerta {
+  nombre: string;
+  macroNombre: string;
+  total_gastado: number;
+  objetivo: number;
+  pct: number;
+}
+
 export default function DashboardPage() {
   const [mesSeleccionado, setMesSeleccionado] = useState(ymdLocal(new Date()).slice(0, 7));
   const [macros, setMacros] = useState<MacroData[]>([]);
@@ -21,6 +29,7 @@ export default function DashboardPage() {
   const [alberto, setAlberto] = useState(0);
   const [deudasGloria, setDeudasGloria] = useState(0);
   const [deudasAlberto, setDeudasAlberto] = useState(0);
+  const [alertasSub, setAlertasSub] = useState<SubAlerta[]>([]);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -106,6 +115,54 @@ export default function DashboardPage() {
       setDeudasGloria(gloriaDeudas);
       setDeudasAlberto(albertoDeudas);
 
+      // Alertas por subcategoría (con presupuesto propio: pct_objetivo o monto_objetivo)
+      const { data: subs } = await supabase
+        .from("categorias")
+        .select("id, nombre, pct_objetivo, monto_objetivo, categorias_macro ( nombre )")
+        .or("pct_objetivo.not.is.null,monto_objetivo.not.is.null");
+
+      if (subs && subs.length > 0) {
+        const { data: gastosPorSub } = await supabase
+          .from("gastos")
+          .select("categoria_id, monto")
+          .gte("fecha", mesInicioStr)
+          .lt("fecha", mesFinStr);
+
+        const sumaPorSub = new Map<string, number>();
+        gastosPorSub?.forEach((g: any) => {
+          sumaPorSub.set(g.categoria_id, (sumaPorSub.get(g.categoria_id) || 0) + g.monto);
+        });
+
+        const ingresoActual = ingresoData?.monto || 0;
+        const alertas: SubAlerta[] = [];
+
+        subs.forEach((s: any) => {
+          const gastado = sumaPorSub.get(s.id) || 0;
+          let objetivo = 0;
+          if (s.monto_objetivo) {
+            objetivo = s.monto_objetivo;
+          } else if (s.pct_objetivo && ingresoActual > 0) {
+            objetivo = ingresoActual * s.pct_objetivo;
+          }
+          if (objetivo <= 0) return;
+
+          const pct = (gastado / objetivo) * 100;
+          if (pct >= 80) {
+            alertas.push({
+              nombre: s.nombre,
+              macroNombre: s.categorias_macro?.nombre || "",
+              total_gastado: gastado,
+              objetivo,
+              pct,
+            });
+          }
+        });
+
+        setAlertasSub(alertas.sort((a, b) => b.pct - a.pct));
+      } else {
+        setAlertasSub([]);
+      }
+
       setPending(false);
     };
 
@@ -169,6 +226,25 @@ export default function DashboardPage() {
           </div>
         </div>
       </Card>
+
+      {/* ALERTAS DE SUBCATEGORÍA */}
+      {alertasSub.length > 0 && (
+        <Card title="⚠️ Alertas de presupuesto" accent>
+          <div className="space-y-2">
+            {alertasSub.map((a) => (
+              <div key={a.nombre} className="flex justify-between items-center text-[13px]">
+                <div>
+                  <div className="font-semibold">{a.nombre}</div>
+                  <div className="text-[11px] text-[var(--mid)]">
+                    {a.macroNombre} • {fmt(a.total_gastado)} / {fmt(a.objetivo)}
+                  </div>
+                </div>
+                <Badge color={a.pct >= 100 ? "red" : "yellow"}>{Math.round(a.pct)}%</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* DEUDAS */}
       {(deudasGloria > 0 || deudasAlberto > 0) && (
