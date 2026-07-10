@@ -9,6 +9,7 @@ const TABS = [
   { href: "/nuevo", icon: "➕", label: "Nuevo" },
   { href: "/resumen", icon: "📅", label: "Resumen" },
   { href: "/balance", icon: "⚖️", label: "Balance" },
+  { href: "/deudas", icon: "💳", label: "Deudas" },
   { href: "/revisar", icon: "🏷️", label: "Revisar" },
   { href: "/ajustes", icon: "⚙️", label: "Ajustes" },
 ];
