@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Card } from "@/components/ui";
 import { fmt } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
@@ -49,6 +49,7 @@ export default function DetallePage() {
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
   const [soloDiasConGasto, setSoloDiasConGasto] = useState(true);
   const [pending, setPending] = useState(true);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -150,6 +151,22 @@ export default function DetallePage() {
     const fecha = new Date(año, mesIdx, dia);
     return DIAS_SEMANA[fecha.getDay()];
   };
+
+  // Al mostrar todos los días, hacer scroll automático hasta el primer día con gasto
+  useEffect(() => {
+    if (!soloDiasConGasto && diasConGasto.length > 0 && tableScrollRef.current) {
+      const primerDia = diasConGasto[0];
+      const idxColumna = diasDelMes.indexOf(primerDia);
+      if (idxColumna >= 0) {
+        const fixedColsWidth = 150 + 100 + 72; // categoría + responsable + total
+        const colWidth = 72;
+        const scrollTarget = Math.max(0, fixedColsWidth + idxColumna * colWidth - fixedColsWidth - colWidth);
+        tableScrollRef.current.scrollLeft = scrollTarget;
+      }
+    } else if (tableScrollRef.current) {
+      tableScrollRef.current.scrollLeft = 0;
+    }
+  }, [soloDiasConGasto, diasDelMes, diasConGasto]);
 
   const macrosOrdenados = Array.from(arbol.values()).sort((a, b) => b.total - a.total);
 
@@ -257,7 +274,13 @@ export default function DetallePage() {
           <div className="text-center text-[14px] text-[var(--mid)] py-8">Sin gastos este mes</div>
         </Card>
       ) : (
-        <div className="border border-[var(--border)] rounded-lg overflow-x-auto bg-white">
+        <>
+          {!soloDiasConGasto && (
+            <div className="text-[11px] text-[var(--mid)] px-1 -mb-1">
+              ← Desliza horizontalmente para ver todos los días • los días con gasto están resaltados
+            </div>
+          )}
+          <div ref={tableScrollRef} className="border border-[var(--border)] rounded-lg overflow-x-auto bg-white">
           <table className="border-collapse text-[12px]" style={{ minWidth: "100%" }}>
             <thead>
               <tr className="bg-[var(--gradient)] text-white sticky top-0">
@@ -273,14 +296,21 @@ export default function DetallePage() {
                 <th className="text-right px-3 py-2 font-bold" style={{ minWidth: colWidth }}>
                   Total
                 </th>
-                {diasDelMes.map((dia) => (
-                  <th key={dia} className="text-right px-2 py-2 font-bold" style={{ minWidth: colWidth }}>
+                {diasDelMes.map((dia) => {
+                  const tieneGasto = diasConGasto.includes(dia);
+                  return (
+                  <th
+                    key={dia}
+                    className={`text-right px-2 py-2 font-bold ${tieneGasto ? "bg-[var(--gold)]/30" : ""}`}
+                    style={{ minWidth: colWidth }}
+                  >
                     <div className="leading-tight">
                       <div className="text-[10px] font-normal opacity-80 capitalize">{nombreDia(dia)}</div>
                       <div>{dia}</div>
                     </div>
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -307,7 +337,12 @@ export default function DetallePage() {
                       <td className="px-2 py-2"></td>
                       <td className="text-right px-3 py-2 font-bold">{fmt(macro.total)}</td>
                       {diasDelMes.map((dia) => (
-                        <td key={dia} className="text-right px-2 py-2">
+                        <td
+                          key={dia}
+                          className={`text-right px-2 py-2 ${
+                            diasConGasto.includes(dia) ? "bg-[var(--gold)]/10" : ""
+                          }`}
+                        >
                           {macro.porDia.get(dia) ? fmt(macro.porDia.get(dia)!) : ""}
                         </td>
                       ))}
@@ -338,7 +373,12 @@ export default function DetallePage() {
                               <td className="px-2 py-1.5"></td>
                               <td className="text-right px-3 py-1.5 font-semibold">{fmt(cat.total)}</td>
                               {diasDelMes.map((dia) => (
-                                <td key={dia} className="text-right px-2 py-1.5 text-[var(--mid)]">
+                                <td
+                                  key={dia}
+                                  className={`text-right px-2 py-1.5 text-[var(--mid)] ${
+                                    diasConGasto.includes(dia) ? "bg-[var(--gold)]/10" : ""
+                                  }`}
+                                >
                                   {cat.porDia.get(dia) ? fmt(cat.porDia.get(dia)!) : ""}
                                 </td>
                               ))}
@@ -392,7 +432,8 @@ export default function DetallePage() {
               </tr>
             </tfoot>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
