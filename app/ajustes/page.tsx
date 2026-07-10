@@ -35,12 +35,12 @@ export default function AjustesPage() {
       }
 
       // verificar si hay push subscriptions
-      const { data: session } = await supabase.auth.getSession();
-      if (session?.user?.id) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user?.id) {
         const { data: pushData } = await supabase
           .from("push_subscriptions")
           .select("id")
-          .eq("usuario_id", session.user.id)
+          .eq("usuario_id", data.session.user.id)
           .limit(1);
 
         setHasPush((pushData?.length || 0) > 0);
