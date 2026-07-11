@@ -10,7 +10,6 @@ const TABS = [
   { href: "/gastos", label: "Gastos" },
   { href: "/detalle", label: "Detalle gastos" },
   { href: "/resumen", label: "Resumen" },
-  { href: "/balance", label: "Balance" },
   { href: "/deudas", label: "Deudas" },
   { href: "/revisar", label: "Revisar" },
   { href: "/ajustes", label: "Ajustes" },
