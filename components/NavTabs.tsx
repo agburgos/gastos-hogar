@@ -5,63 +5,77 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const TABS = [
-  { href: "/", icon: "📊", label: "Inicio" },
-  { href: "/nuevo", icon: "➕", label: "Nuevo" },
-  { href: "/detalle", icon: "📋", label: "Detalle" },
-  { href: "/resumen", icon: "📅", label: "Resumen" },
-  { href: "/balance", icon: "⚖️", label: "Balance" },
-  { href: "/deudas", icon: "💳", label: "Deudas" },
-  { href: "/revisar", icon: "🏷️", label: "Revisar" },
-  { href: "/ajustes", icon: "⚙️", label: "Ajustes" },
+  { href: "/", label: "inicio", n: "01" },
+  { href: "/nuevo", label: "nuevo", n: "02" },
+  { href: "/detalle", label: "detalle", n: "03" },
+  { href: "/resumen", label: "resumen", n: "04" },
+  { href: "/balance", label: "balance", n: "05" },
+  { href: "/deudas", label: "deudas", n: "06" },
+  { href: "/revisar", label: "revisar", n: "07" },
+  { href: "/ajustes", label: "ajustes", n: "08" },
 ];
 
 export default function NavTabs({ nombre }: { nombre: string }) {
   const pathname = usePathname();
+  const primerNombre = nombre.split(" ")[0];
 
   return (
     <>
-      <nav className="sticky top-0 z-50" style={{ background: "var(--gradient)" }}>
-        <div className="max-w-[480px] lg:max-w-full mx-auto flex items-center justify-between px-4 py-3.5">
-          <div className="leading-tight">
-            <div className="text-[17px] font-extrabold tracking-tight text-white drop-shadow-sm">
-              Gastos Hogar
+      <header className="sticky top-0 z-50 bg-[var(--paper)]/95 backdrop-blur-sm border-b-2 border-[var(--ink)]">
+        <div className="max-w-[480px] lg:max-w-full mx-auto flex items-end justify-between px-4 pt-4 pb-3">
+          <Link href="/" className="leading-none">
+            <div className="display text-[26px] font-medium italic tracking-tight text-[var(--ink)]">
+              Casa
             </div>
-            <div className="text-[11px] font-semibold text-white/85 -mt-0.5 tracking-wide">
-              Garrido Roa
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--coral)] -mt-1">
+              Garrido · Roa
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="text-xs font-medium text-white/85 bg-white/15 rounded-full px-2.5 py-1 max-w-[110px] truncate">
-              {nombre}
-            </div>
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] font-semibold text-[var(--ink-soft)] hidden sm:inline">
+              hola, {primerNombre}
+            </span>
             <button
               onClick={() => supabase.auth.signOut()}
-              className="text-xs font-semibold text-white/85 bg-white/15 rounded-full px-2.5 py-1"
+              className="text-[11px] font-bold uppercase tracking-wide text-[var(--ink)] border-2 border-[var(--ink)] px-2.5 py-1 rounded-sm hover:bg-[var(--ink)] hover:text-[var(--paper)] transition-colors"
             >
               Salir
             </button>
           </div>
         </div>
+      </header>
+
+      <nav className="sticky top-[65px] z-40 bg-[var(--paper)] border-b border-[var(--rule)] overflow-x-auto">
+        <div className="max-w-[480px] lg:max-w-full mx-auto flex px-2">
+          {TABS.map((tab) => {
+            const active = pathname === tab.href;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="group relative px-3 py-2.5 whitespace-nowrap"
+              >
+                <span
+                  className={`flex items-baseline gap-1 transition-all ${
+                    active
+                      ? "display italic text-[15px] font-semibold text-[var(--ink)]"
+                      : "text-[13px] font-medium text-[var(--ink-faint)] group-hover:text-[var(--ink-soft)]"
+                  }`}
+                >
+                  <span className="text-[9px] font-mono opacity-50">{tab.n}</span>
+                  {tab.label}
+                </span>
+                {active && (
+                  <span
+                    className="absolute left-2 right-2 -bottom-[1px] h-[3px] rise-in"
+                    style={{ background: "var(--lime)" }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
-      <div className="flex bg-[var(--warm-white)] border-b border-[var(--border)] overflow-x-auto sticky top-[64px] z-40 shadow-sm">
-        {TABS.map((tab) => {
-          const active = pathname === tab.href;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`flex-1 min-w-[64px] px-1 py-2.5 text-[10.5px] font-semibold text-center whitespace-nowrap border-b-[3px] transition-colors ${
-                active
-                  ? "text-[var(--accent)] border-[var(--accent)]"
-                  : "text-[var(--mid)] border-transparent"
-              }`}
-            >
-              <span className="block text-lg mb-0.5">{tab.icon}</span>
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
     </>
   );
 }

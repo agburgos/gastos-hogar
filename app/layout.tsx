@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import AuthGate from "@/components/AuthGate";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "900"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Gastos Hogar",
+  title: "Casa Garrido Roa",
   description: "Control de presupuesto y gasto familiar — Garrido Roa.",
 };
 
@@ -26,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthGate>{children}</AuthGate>

@@ -199,45 +199,63 @@ export default function DashboardPage() {
     montoAPagar = saldoAlberto;
   }
 
+  const mesLabel = new Date(parseInt(mesSeleccionado.slice(0, 4)), parseInt(mesSeleccionado.slice(5, 7)) - 1, 1)
+    .toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+
   return (
-    <div className="space-y-3">
-      {/* Selector de mes */}
-      <Card title="Mes">
+    <div className="pb-24">
+      {/* HERO editorial: mes + total, tipografía enorme, sin caja */}
+      <div className="rise-in -mx-4 px-4 pt-2 pb-8 mb-6" style={{ background: "var(--gradient)" }}>
+        <label className="!text-white/70">Mes en curso</label>
         <input
           type="month"
           value={mesSeleccionado}
           onChange={(e) => setMesSeleccionado(e.target.value)}
-          className="w-full text-[14px] bg-transparent border-b-2 border-[var(--accent)] focus:outline-none pb-2"
+          className="!bg-transparent !border-none !text-white !p-0 !text-[13px] font-semibold w-auto mb-3"
+          style={{ colorScheme: "dark" }}
         />
-      </Card>
-
-      {/* RESUMEN MENSUAL */}
-      <Card title="RESUMEN GASTOS" accent>
-        <div className="space-y-2 text-[14px]">
-          <div className="flex justify-between">
-            <span>Gloria gastó:</span>
-            <span className="font-bold">{fmt(gloria)}</span>
+        <div className="display text-[15vw] sm:text-[64px] leading-[0.85] font-black text-white capitalize -ml-0.5">
+          {mesLabel.split(" ")[0]}
+        </div>
+        <div className="flex items-end justify-between mt-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-widest text-white/70">Gastado</div>
+            <div className="display text-[38px] italic font-medium text-white leading-none">{fmt(totalGasto)}</div>
           </div>
-          <div className="flex justify-between">
-            <span>Alberto gastó:</span>
-            <span className="font-bold">{fmt(alberto)}</span>
-          </div>
-          <div className="h-px bg-[var(--border)] my-2" />
-          <div className="flex justify-between font-bold text-[15px]">
-            <span>Total:</span>
-            <span>{fmt(totalGasto)}</span>
-          </div>
-          <div className="flex justify-between text-[12px] text-[var(--mid)]">
-            <span>Mitad:</span>
-            <span>{fmt(mitad)}</span>
+          <div className="text-right">
+            <div className="text-[11px] font-bold uppercase tracking-widest text-white/70">Gloria / Alberto</div>
+            <div className="text-[15px] font-bold text-white">{fmt(gloria)} · {fmt(alberto)}</div>
           </div>
         </div>
-      </Card>
+      </div>
+
+      {/* Balance: tratamiento único, no card */}
+      {montoAPagar > 0 ? (
+        <div className="slide-in mb-8 flex items-center gap-4">
+          <div
+            className="display text-[46px] italic font-black leading-none shrink-0"
+            style={{ color: "var(--coral)" }}
+          >
+            →
+          </div>
+          <div>
+            <div className="text-[15px] font-semibold leading-tight">{resumenPago}</div>
+            <div className="display text-[24px] font-bold" style={{ color: "var(--coral)" }}>
+              {fmt(montoAPagar)}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="slide-in mb-8 flex items-center gap-3">
+          <span className="w-3 h-3 rounded-full shrink-0" style={{ background: "var(--lime)" }} />
+          <span className="display text-[18px] italic">Cuentas balanceadas</span>
+        </div>
+      )}
 
       {/* ALERTAS DE SUBCATEGORÍA */}
       {alertasSub.length > 0 && (
-        <Card title="⚠️ Alertas de presupuesto" accent>
-          <div className="space-y-2">
+        <Card title="Alertas de presupuesto" accent>
+          <div className="space-y-3">
             {alertasSub.map((a) => (
               <div key={a.nombre} className="flex justify-between items-center text-[13px]">
                 <div>
@@ -255,7 +273,7 @@ export default function DashboardPage() {
 
       {/* DEUDAS */}
       {(deudasGloria > 0 || deudasAlberto > 0) && (
-        <Card title="DEUDAS PENDIENTES">
+        <Card title="Deudas pendientes">
           <div className="space-y-2 text-[14px]">
             {deudasGloria > 0 && (
               <div className="flex justify-between">
@@ -270,7 +288,7 @@ export default function DashboardPage() {
               </div>
             )}
             <div className="text-[11px] text-[var(--mid)]">
-              <Link href="/deudas" className="text-[var(--accent)] underline">
+              <Link href="/deudas" className="underline decoration-[var(--lime)] decoration-2 underline-offset-2">
                 Ver detalles
               </Link>
             </div>
@@ -278,64 +296,38 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* QUIÉN DEBE PAGAR (con deudas consideradas) */}
-      {montoAPagar > 0 && (
-        <Card accent>
-          <div className="text-center">
-            <div className="text-[12px] text-[var(--mid)] mb-2">Balance final</div>
-            <div className="text-[15px] font-bold mb-1">{resumenPago}</div>
-            <Badge color="red">{fmt(montoAPagar)}</Badge>
-          </div>
-        </Card>
-      )}
-
-      {saldoGloria === 0 && saldoAlberto === 0 && (
-        <Card accent>
-          <div className="text-center">
-            <Badge color="green">✓ Balanceado</Badge>
-          </div>
-        </Card>
-      )}
-
-      {/* PRESUPUESTO POR CATEGORÍA */}
-      {ingreso > 0 && (
+      {/* PRESUPUESTO POR CATEGORÍA: grid asimétrico, no stack uniforme */}
+      {ingreso > 0 && macros.length > 0 && (
         <>
-          <div className="text-[12px] font-bold text-[var(--accent)] uppercase tracking-wider px-4 py-2">
-            Presupuesto por categoría
-          </div>
+          <h2 className="display text-[22px] italic font-medium mb-4 mt-2">Presupuesto</h2>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-6">
+            {macros.map((macro, i) => {
+              const pct = ingreso > 0 ? (macro.total_gastado / (ingreso * macro.pct_objetivo)) * 100 : 0;
+              const objetivo = ingreso * macro.pct_objetivo;
+              const restante = objetivo - macro.total_gastado;
+              // asimetría: cada 3er item ocupa el ancho completo
+              const wide = i % 3 === 0;
 
-          {macros.map((macro) => {
-            const pct =
-              ingreso > 0 ? (macro.total_gastado / (ingreso * macro.pct_objetivo)) * 100 : 0;
-            const objetivo = ingreso * macro.pct_objetivo;
-            const restante = objetivo - macro.total_gastado;
-
-            return (
-              <Card key={macro.id} title={macro.nombre} accent={pct > 80}>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[12px] text-[var(--mid)]">
-                    <span>
-                      {fmt(macro.total_gastado)} / {fmt(objetivo)}
-                    </span>
-                    <Badge color={pct >= 100 ? "red" : pct >= 80 ? "yellow" : "green"}>
-                      {Math.round(pct)}%
-                    </Badge>
+              return (
+                <div key={macro.id} className={`rise-in ${wide ? "col-span-2" : "col-span-1"}`} style={{ animationDelay: `${i * 40}ms` }}>
+                  <div className="flex justify-between items-baseline mb-1.5">
+                    <span className="text-[13px] font-bold">{macro.nombre}</span>
+                    <Badge color={pct >= 100 ? "red" : pct >= 80 ? "yellow" : "green"}>{Math.round(pct)}%</Badge>
                   </div>
                   <ProgressBar pct={pct} />
-                  <div className="text-[11px] text-[var(--mid)]">
-                    {restante > 0
-                      ? `Disponible: ${fmt(restante)}`
-                      : `Excedido: ${fmt(Math.abs(restante))}`}
+                  <div className="flex justify-between mt-1.5 text-[11px] text-[var(--mid)]">
+                    <span>{fmt(macro.total_gastado)}</span>
+                    <span>{restante > 0 ? `+${fmt(restante)}` : `−${fmt(Math.abs(restante))}`}</span>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
+              );
+            })}
+          </div>
         </>
       )}
 
       {/* Botón flotante nuevo gasto */}
-      <div className="fixed bottom-20 right-4 left-4 max-w-[480px] mx-auto">
+      <div className="fixed bottom-6 right-4 left-4 max-w-[480px] mx-auto z-30">
         <Link href="/nuevo">
           <Btn>+ Nuevo gasto</Btn>
         </Link>

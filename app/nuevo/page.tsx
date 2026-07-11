@@ -150,19 +150,23 @@ export default function NuevoPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      {/* Monto */}
-      <Card title="Monto">
-        <input
-          type="number"
-          step="0.01"
-          placeholder="0"
-          value={monto}
-          onChange={(e) => setMonto(e.target.value)}
-          autoFocus
-          className="w-full text-4xl font-bold text-[var(--charcoal)] bg-transparent border-b-2 border-[var(--accent)] focus:outline-none pb-2"
-        />
-      </Card>
+    <form onSubmit={handleSubmit} className="space-y-3 pb-4">
+      {/* Monto: foco absoluto de la pantalla, tipografía enorme */}
+      <div className="rise-in -mx-4 px-4 pt-4 pb-8 mb-2 text-center" style={{ background: "var(--gradient)" }}>
+        <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/70 mb-2">¿Cuánto fue?</div>
+        <div className="flex items-center justify-center gap-1">
+          <span className="display text-[32px] italic text-white/80">$</span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0"
+            value={monto}
+            onChange={(e) => setMonto(e.target.value)}
+            autoFocus
+            className="!bg-transparent !border-none !p-0 display text-[64px] font-black text-white text-center w-[60%] leading-none"
+          />
+        </div>
+      </div>
 
       {/* Selección de categoría: 2 taps */}
       {!macroSeleccionada ? (
@@ -173,7 +177,7 @@ export default function NuevoPage() {
                 key={macro.id}
                 type="button"
                 onClick={() => handleMacroSelect(macro.id)}
-                className="flex-1 min-w-[48%] px-3 py-2.5 rounded-lg bg-[var(--accent-bg)] text-[var(--accent)] font-bold text-[13px] hover:bg-[var(--accent)] hover:text-white transition-colors"
+                className="flex-1 min-w-[48%] px-3 py-2.5 rounded-sm bg-[var(--indigo-bg)] text-[var(--indigo)] font-bold text-[13px] hover:bg-[var(--indigo)] hover:text-white transition-colors"
               >
                 {macro.nombre}
               </button>

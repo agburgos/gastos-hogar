@@ -1,32 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --linen: #F6F7FB;
-  --warm-white: #FFFFFF;
-  --charcoal: #1A1D29;
-  --mid: #64708A;
-  --light: #C4CBDB;
-  --accent: #4F46E5;
-  --accent-light: color-mix(in srgb, var(--accent) 70%, white);
-  --accent-bg: color-mix(in srgb, var(--accent) 10%, white);
-  --gold: #B45309;
-  --gold-bg: #FDECD3;
+  /* Paper: cálido, no el blanco-frío típico de SaaS */
+  --paper: #FBF6EF;
+  --paper-raised: #FFFFFF;
+  --ink: #1B1A22;
+  --ink-soft: #5C5A6B;
+  --ink-faint: #9E9BAE;
+
+  /* Vibrante: coral cálido + índigo eléctrico + lima ácido */
+  --coral: #FF5A3C;
+  --coral-bg: #FFE4DB;
+  --indigo: #4C3AFF;
+  --indigo-bg: #E6E1FF;
+  --lime: #C6F135;
+  --lime-bg: #F1FBCE;
+  --ink-bg: #E9E7F3;
+
+  --green: #0E7A4E;
+  --green-bg: #D7F5E3;
+  --red: #E0382B;
+  --red-bg: #FFE1DC;
+  --yellow: #B9790A;
+  --yellow-bg: #FCEDC7;
+
+  --rule: #E4DDD0;
+  --rule-strong: #1B1A22;
+
+  --gradient: linear-gradient(115deg, var(--coral) 0%, var(--indigo) 100%);
+
+  /* legacy aliases used across pages */
+  --linen: var(--paper);
+  --warm-white: var(--paper-raised);
+  --charcoal: var(--ink);
+  --mid: var(--ink-soft);
+  --light: var(--ink-faint);
+  --accent: var(--indigo);
+  --accent-light: color-mix(in srgb, var(--indigo) 70%, white);
+  --accent-bg: var(--indigo-bg);
+  --gold: var(--coral);
+  --gold-bg: var(--coral-bg);
   --teal: #0E7490;
-  --teal-bg: color-mix(in srgb, var(--teal) 14%, white);
-  --green: #15803D;
-  --green-bg: #DCFCE7;
-  --red: #DC2626;
-  --red-bg: #FEE2E2;
-  --yellow: #B45309;
-  --yellow-bg: #FEF3C7;
-  --border: #E2E5F0;
-  --gradient: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 60%, #6366F1) 100%);
+  --teal-bg: color-mix(in srgb, #0E7490 14%, white);
+  --border: var(--rule);
+}
+
+@font-face {
+  font-display: swap;
 }
 
 body {
-  background: var(--linen);
-  color: var(--charcoal);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
+  background-image:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--lime) 18%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--coral) 10%, transparent) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.01em;
 }
 
 input,
@@ -34,19 +69,20 @@ select,
 textarea {
   width: 100%;
   padding: 11px 13px;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border: 2px solid var(--rule);
+  border-radius: 4px;
   font-size: 15px;
-  background: var(--warm-white);
-  color: var(--charcoal);
+  font-family: var(--font-body), sans-serif;
+  background: var(--paper-raised);
+  color: var(--ink);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--lime);
 }
 textarea {
   resize: none;
@@ -54,7 +90,36 @@ textarea {
 }
 label {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin-bottom: 5px;
+  color: var(--ink-soft);
+}
+
+/* Animaciones sutiles */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.rise-in {
+  animation: riseIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.slide-in {
+  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
 }
