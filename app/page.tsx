@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const [alertasSub, setAlertasSub] = useState<SubAlerta[]>([]);
   const [deudasResumen, setDeudasResumen] = useState<DeudaResumen[]>([]);
   const [deudasDeclaradas, setDeudasDeclaradas] = useState<DeudaResumen[]>([]);
+  const [deudaTotalGeneral, setDeudaTotalGeneral] = useState(0);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -146,17 +147,42 @@ export default function DashboardPage() {
       setGloria(gloriaGastó);
       setAlberto(albertoGastó);
 
-      // Traer deudas ACTIVAS (pagando = true) para el cálculo de balance
-      const { data: deudasActivas } = await supabase
-        .from("deudas")
-        .select("responsable_id, acreedor_id, saldo_pendiente")
+      // Auto-descuento: para deudas activas con cuota_grupo_id, sumar las cuotas
+      // cuya fecha ya pasó y actualizar monto_pagado (el mes se va "pagando solo")
+      const hoyStr = ymdLocal(new Date());
+      const { data: deudasParaSync } = await supabase
+        .from("deuda_saldos")
+        .select("id, monto_total, monto_pagado, cuota_grupo_id, pagando")
         .eq("pagando", true)
-        .gt("saldo_pendiente", 0);
+        .not("cuota_grupo_id", "is", null);
 
-      // Traer deudas completas para mostrar resumen con pagando status
+      if (deudasParaSync && deudasParaSync.length > 0) {
+        for (const d of deudasParaSync) {
+          const { data: cuotasPasadas } = await supabase
+            .from("gastos")
+            .select("monto")
+            .eq("cuota_grupo_id", d.cuota_grupo_id)
+            .lte("fecha", hoyStr);
+
+          const totalPagadoCalculado = (cuotasPasadas || []).reduce(
+            (sum: number, g: any) => sum + g.monto,
+            0
+          );
+          const nuevoMontoPagado = Math.min(totalPagadoCalculado, d.monto_total);
+
+          if (nuevoMontoPagado !== d.monto_pagado) {
+            await supabase
+              .from("deudas")
+              .update({ monto_pagado: nuevoMontoPagado })
+              .eq("id", d.id);
+          }
+        }
+      }
+
+      // Traer TODAS las deudas (vista deuda_saldos calcula saldo_pendiente correctamente)
       const { data: deudasDetalle } = await supabase
-        .from("deudas")
-        .select("id, nombre, saldo_pendiente, pagando, responsable_id")
+        .from("deuda_saldos")
+        .select("id, nombre, saldo_pendiente, pagando, responsable_id, acreedor_id")
         .gt("saldo_pendiente", 0)
         .order("saldo_pendiente", { ascending: false });
 
@@ -166,11 +192,18 @@ export default function DashboardPage() {
       const deudasNoActivas = deudasDetalle?.filter((d: any) => !d.pagando) || [];
       setDeudasDeclaradas(deudasNoActivas);
 
+      // Total de TODAS las deudas (sumen o no al balance del mes)
+      const totalDeudaGeneral = (deudasDetalle || []).reduce(
+        (sum: number, d: any) => sum + (d.saldo_pendiente || 0),
+        0
+      );
+      setDeudaTotalGeneral(totalDeudaGeneral);
+
       let gloriaDebeNeto = 0;
       let albertoDebeNeto = 0;
 
-      // Solo contar deudas que están ACTIVAS (pagando = true)
-      deudasActivas?.forEach((d: any) => {
+      // Solo contar deudas que están ACTIVAS (pagando = true) para el balance del mes
+      deudaspagando.forEach((d: any) => {
         const saldo = d.saldo_pendiente || 0;
         if (saldo <= 0) return;
         if (d.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
@@ -346,9 +379,16 @@ export default function DashboardPage() {
       )}
 
       {/* DEUDAS */}
-      {(deudasGloria > 0 || deudasAlberto > 0 || deudasDeclaradas.length > 0) && (
+      {(deudasGloria > 0 || deudasAlberto > 0 || deudasDeclaradas.length > 0 || deudaTotalGeneral > 0) && (
         <Card title="Deudas">
           <div className="space-y-3 text-[14px]">
+            {deudaTotalGeneral > 0 && (
+              <div className="flex justify-between items-center pb-2 border-b border-[var(--rule)]">
+                <span className="font-semibold">Total deuda (todas):</span>
+                <span className="font-bold text-[15px]">{fmt(deudaTotalGeneral)}</span>
+              </div>
+            )}
+
             {(deudasGloria > 0 || deudasAlberto > 0) && (
               <div className="space-y-2">
                 <div className="text-[12px] text-[var(--ink-soft)] font-medium">Debe pagar (activo):</div>

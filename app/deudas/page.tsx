@@ -22,6 +22,7 @@ interface Deuda {
   descripcion: string | null;
   activa: boolean;
   pagando: boolean;
+  cuota_grupo_id: string | null;
 }
 
 function nombrePorId(id: string | null) {
@@ -215,7 +216,10 @@ export default function DeudasPage() {
       return;
     }
 
-    const { error } = await supabase.from("deudas").update({ pagando: true }).eq("id", deuda.id);
+    const { error } = await supabase
+      .from("deudas")
+      .update({ pagando: true, cuota_grupo_id: cuotaGrupoId })
+      .eq("id", deuda.id);
     if (error) {
       alert("Error al activar: " + error.message);
       return;

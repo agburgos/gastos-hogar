@@ -58,6 +58,7 @@ export default function DetallePage() {
     responsable: string;
     dia: number;
   } | null>(null);
+  const [busqueda, setBusqueda] = useState("");
 
   const fetchGastos = async () => {
     setPending(true);
@@ -259,6 +260,46 @@ export default function DetallePage() {
         </div>
       </Card>
 
+      {/* Buscador de gastos */}
+      <Card>
+        <input
+          type="text"
+          placeholder="🔍 Buscar gasto por título..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        {busqueda.trim() && (
+          <div className="mt-2 space-y-1.5 max-h-64 overflow-y-auto">
+            {gastosRaw
+              .filter((g) =>
+                (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase())
+              )
+              .map((g) => (
+                <div
+                  key={g.id}
+                  className="flex justify-between items-center text-[12px] p-2 rounded-lg bg-[var(--paper-raised-2)]"
+                >
+                  <div>
+                    <div className="font-semibold">{g.descripcion || "Sin título"}</div>
+                    <div className="text-[10px] text-[var(--ink-soft)]">
+                      {g.macro} › {g.categoria} · {g.responsable} · día{" "}
+                      {parseInt(g.fecha.slice(8, 10))}
+                    </div>
+                  </div>
+                  <span className="font-bold">{fmt(g.monto)}</span>
+                </div>
+              ))}
+            {gastosRaw.filter((g) =>
+              (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase())
+            ).length === 0 && (
+              <div className="text-[12px] text-[var(--ink-faint)] text-center py-2">
+                Sin resultados este mes
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
       {/* Cajas de total por responsable */}
       <div className="grid grid-cols-2 gap-3">
         <Card title="Gloria">
@@ -444,6 +485,17 @@ export default function DetallePage() {
                                   </td>
                                   {diasDelMes.map((dia) => {
                                     const monto = resp.porDia.get(dia);
+                                    const gastosCelda = monto
+                                      ? gastosRaw.filter(
+                                          (g) =>
+                                            g.macro === macro.nombre &&
+                                            g.categoria === cat.nombre &&
+                                            g.responsable === resp.nombre &&
+                                            parseInt(g.fecha.slice(8, 10)) === dia
+                                        )
+                                      : [];
+                                    const tituloUnico =
+                                      gastosCelda.length === 1 ? gastosCelda[0].descripcion : null;
                                     return (
                                       <td
                                         key={dia}
@@ -460,7 +512,18 @@ export default function DetallePage() {
                                           monto ? "cursor-pointer underline decoration-dotted hover:bg-[var(--accent-bg)]" : ""
                                         }`}
                                       >
-                                        {monto ? fmt(monto) : ""}
+                                        {monto ? (
+                                          <div className="leading-tight">
+                                            <div>{fmt(monto)}</div>
+                                            {tituloUnico && (
+                                              <div className="text-[9px] text-[var(--ink-faint)] truncate max-w-[80px] ml-auto">
+                                                {tituloUnico}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          ""
+                                        )}
                                       </td>
                                     );
                                   })}
