@@ -33,8 +33,53 @@ export default function GastosPage() {
   const [montoEdit, setMontoEdit] = useState("");
   const [descEdit, setDescEdit] = useState("");
 
+  const generarRecurrentes = async () => {
+    const mesAnterior = new Date(año, mesIdx - 1, 1);
+    const mesPrevioInicio = mesAnterior.toISOString().slice(0, 10);
+    const mesPrevioFin = new Date(año, mesIdx, 1).toISOString().slice(0, 10);
+
+    // Traer gastos recurrentes del mes anterior
+    const { data: recurrentes } = await supabase
+      .from("gastos")
+      .select("id, monto, descripcion, categoria_id, responsable_id, compartido, ambito")
+      .eq("recurrente", true)
+      .gte("fecha", mesPrevioInicio)
+      .lt("fecha", mesPrevioFin);
+
+    if (!recurrentes || recurrentes.length === 0) return;
+
+    // Para cada recurrente, verificar si existe en este mes
+    const mesActualInicio = new Date(año, mesIdx, 1).toISOString().slice(0, 10);
+    for (const gasto of recurrentes) {
+      const { data: existe } = await supabase
+        .from("gastos")
+        .select("id")
+        .eq("descripcion", gasto.descripcion)
+        .eq("responsable_id", gasto.responsable_id)
+        .gte("fecha", mesActualInicio)
+        .limit(1);
+
+      // Si no existe, crear
+      if (!existe || existe.length === 0) {
+        const proximaFecha = new Date(año, mesIdx, 1);
+        await supabase.from("gastos").insert({
+          monto: gasto.monto,
+          descripcion: gasto.descripcion,
+          categoria_id: gasto.categoria_id,
+          responsable_id: gasto.responsable_id,
+          fecha: ymdLocal(proximaFecha),
+          compartido: gasto.compartido,
+          ambito: gasto.ambito || "ninguno",
+          recurrente: true,
+        });
+      }
+    }
+  };
+
   const cargar = async () => {
     setLoading(true);
+    await generarRecurrentes();
+
     const mesInicio = new Date(año, mesIdx, 1);
     const mesFin = new Date(año, mesIdx + 1, 1);
 

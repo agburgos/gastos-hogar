@@ -51,6 +51,45 @@ export default function DashboardPage() {
       const mesInicioStr = mesInicio.toISOString().slice(0, 10);
       const mesFinStr = mesFin.toISOString().slice(0, 10);
 
+      // Generar recurrentes automáticamente
+      const mesAnterior = new Date(parseInt(año), parseInt(mes) - 2, 1);
+      const mesPrevioInicio = mesAnterior.toISOString().slice(0, 10);
+      const mesPrevioFin = mesInicio.toISOString().slice(0, 10);
+
+      const { data: recurrentes } = await supabase
+        .from("gastos")
+        .select("id, monto, descripcion, categoria_id, responsable_id, compartido, ambito")
+        .eq("recurrente", true)
+        .gte("fecha", mesPrevioInicio)
+        .lt("fecha", mesPrevioFin);
+
+      if (recurrentes && recurrentes.length > 0) {
+        for (const gasto of recurrentes) {
+          const { data: existe } = await supabase
+            .from("gastos")
+            .select("id")
+            .eq("descripcion", gasto.descripcion)
+            .eq("responsable_id", gasto.responsable_id)
+            .gte("fecha", mesInicioStr)
+            .lt("fecha", mesFinStr)
+            .limit(1);
+
+          if (!existe || existe.length === 0) {
+            const proximaFecha = mesInicio.toISOString().slice(0, 10);
+            await supabase.from("gastos").insert({
+              monto: gasto.monto,
+              descripcion: gasto.descripcion,
+              categoria_id: gasto.categoria_id,
+              responsable_id: gasto.responsable_id,
+              fecha: proximaFecha,
+              compartido: gasto.compartido,
+              ambito: gasto.ambito || "ninguno",
+              recurrente: true,
+            });
+          }
+        }
+      }
+
       // Traer macrocategorías
       const { data: macroData } = await supabase
         .from("categorias_macro")
@@ -106,10 +145,12 @@ export default function DashboardPage() {
       setGloria(gloriaGastó);
       setAlberto(albertoGastó);
 
-      // Traer deudas (deudor/acreedor) — deuda neta que cada uno debe (descontando lo que le deben)
-      const { data: deudas } = await supabase
-        .from("deuda_saldos")
-        .select("responsable_id, acreedor_id, saldo_pendiente");
+      // Traer deudas ACTIVAS (pagando = true) para el cálculo de balance
+      const { data: deudasActivas } = await supabase
+        .from("deudas")
+        .select("responsable_id, acreedor_id, saldo_pendiente")
+        .eq("pagando", true)
+        .gt("saldo_pendiente", 0);
 
       // Traer deudas completas para mostrar resumen con pagando status
       const { data: deudasDetalle } = await supabase
@@ -124,7 +165,8 @@ export default function DashboardPage() {
       let gloriaDebeNeto = 0;
       let albertoDebeNeto = 0;
 
-      deudas?.forEach((d: any) => {
+      // Solo contar deudas que están ACTIVAS (pagando = true)
+      deudasActivas?.forEach((d: any) => {
         const saldo = d.saldo_pendiente || 0;
         if (saldo <= 0) return;
         if (d.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {

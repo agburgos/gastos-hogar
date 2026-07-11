@@ -45,6 +45,9 @@ export default function DeudasPage() {
   });
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [cuotaEdit, setCuotaEdit] = useState("");
+  const [deudaEditMode, setDeudaEditMode] = useState<string | null>(null);
 
   const cargarDeudas = async () => {
     const { data } = await supabase
@@ -231,6 +234,43 @@ export default function DeudasPage() {
     await cargarDeudas();
   };
 
+  const iniciarEditCuota = (deuda: Deuda) => {
+    setEditandoId(deuda.id);
+    setCuotaEdit(deuda.cuota_mensual ? String(deuda.cuota_mensual) : "");
+  };
+
+  const guardarEditCuota = async (id: string) => {
+    const { error } = await supabase
+      .from("deudas")
+      .update({ cuota_mensual: cuotaEdit ? parseFloat(cuotaEdit) : null })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error: " + error.message);
+      return;
+    }
+
+    setEditandoId(null);
+    setCuotaEdit("");
+    await cargarDeudas();
+  };
+
+  const handleTogglePagando = async (deuda: Deuda) => {
+    const nuevoEstado = !deuda.pagando;
+    const { error } = await supabase
+      .from("deudas")
+      .update({ pagando: nuevoEstado })
+      .eq("id", deuda.id);
+
+    if (error) {
+      alert("Error: " + error.message);
+      return;
+    }
+
+    setDeudaEditMode(null);
+    await cargarDeudas();
+  };
+
   // Lo que YO debo (soy deudor) vs lo que ME deben (soy acreedor)
   const yoDebo = deudas.filter((d) => d.responsable_id === userId && d.saldo_pendiente > 0);
   const meDeben = deudas.filter((d) => d.acreedor_id === userId && d.saldo_pendiente > 0);
@@ -260,12 +300,43 @@ export default function DeudasPage() {
               <div className="text-[11px] text-[var(--mid)] mt-1">{deuda.descripcion}</div>
             )}
           </div>
-          <button
-            onClick={() => handleEliminar(deuda.id, deuda.nombre)}
-            className="text-[10px] px-1.5 py-1 bg-[var(--red-bg)] text-[var(--red)] rounded font-bold"
-          >
-            Eliminar
-          </button>
+          <div className="flex gap-1">
+            {deudaEditMode === deuda.id ? (
+              <>
+                <button
+                  onClick={() => handleTogglePagando(deuda)}
+                  className={`text-[10px] px-2 py-1 rounded font-bold ${
+                    deuda.pagando
+                      ? "bg-[var(--red-bg)] text-[var(--red)]"
+                      : "bg-[var(--green-bg)] text-[var(--green)]"
+                  }`}
+                >
+                  {deuda.pagando ? "Desactivar pago" : "Activar pago"}
+                </button>
+                <button
+                  onClick={() => setDeudaEditMode(null)}
+                  className="text-[10px] px-1.5 py-1 bg-[var(--accent-bg)] text-[var(--mid)] rounded font-bold"
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setDeudaEditMode(deuda.id)}
+                  className="text-[10px] px-1.5 py-1 bg-[var(--accent-bg)] text-[var(--accent)] rounded font-bold"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleEliminar(deuda.id, deuda.nombre)}
+                  className="text-[10px] px-1.5 py-1 bg-[var(--red-bg)] text-[var(--red)] rounded font-bold"
+                >
+                  Eliminar
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="text-[13px] space-y-1">
@@ -283,7 +354,33 @@ export default function DeudasPage() {
           </div>
         </div>
 
-        {deuda.cuota_mensual && (
+        {editandoId === deuda.id ? (
+          <div className="space-y-2 border-t border-[var(--rule)] pt-2">
+            <label className="text-[11px] text-[var(--mid)]">Cuota mensual:</label>
+            <input
+              type="number"
+              step="1000"
+              placeholder="Monto cuota"
+              value={cuotaEdit}
+              onChange={(e) => setCuotaEdit(e.target.value)}
+              className="w-full px-2 py-1.5 border border-[var(--border)] rounded text-[13px]"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => guardarEditCuota(deuda.id)}
+                className="flex-1 px-2 py-1.5 bg-[var(--green-bg)] text-[var(--green)] rounded text-[12px] font-bold"
+              >
+                Guardar
+              </button>
+              <button
+                onClick={() => setEditandoId(null)}
+                className="px-3 py-1.5 bg-[var(--accent-bg)] text-[var(--mid)] rounded text-[12px] font-bold"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : deuda.cuota_mensual ? (
           <div className="flex items-center justify-between text-[12px] text-[var(--mid)]">
             <span>Cuota: {fmt(deuda.cuota_mensual)}/mes</span>
             {deuda.pagando ? (
@@ -299,6 +396,15 @@ export default function DeudasPage() {
               )
             )}
           </div>
+        ) : (
+          esDeudor && (
+            <button
+              onClick={() => iniciarEditCuota(deuda)}
+              className="text-[12px] px-3 py-1.5 bg-[var(--accent-bg)] text-[var(--accent)] rounded font-bold w-full"
+            >
+              Agregar cuota mensual
+            </button>
+          )
         )}
 
         {esDeudor && (

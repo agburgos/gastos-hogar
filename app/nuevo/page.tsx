@@ -35,6 +35,7 @@ export default function NuevoPage() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [cuotas, setCuotas] = useState(false);
   const [numCuotas, setNumCuotas] = useState(1);
+  const [recurrente, setRecurrente] = useState(false);
   const [macros, setMacros] = useState<Macro[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [user, setUser] = useState<string | null>(null);
@@ -122,6 +123,7 @@ export default function NuevoPage() {
           fecha: ymdLocal(fechaBase),
           compartido,
           ambito,
+          recurrente,
         });
       }
 
@@ -259,15 +261,26 @@ export default function NuevoPage() {
 
       {/* Compartido */}
       <Card title="Gasto">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={compartido}
-            onChange={(e) => setCompartido(e.target.checked)}
-            className="w-5 h-5"
-          />
-          <span className="text-[14px]">{compartido ? "Compartido entre ambos" : "Gasto personal"}</span>
-        </label>
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={compartido}
+              onChange={(e) => setCompartido(e.target.checked)}
+              className="w-5 h-5"
+            />
+            <span className="text-[14px]">{compartido ? "Compartido entre ambos" : "Gasto personal"}</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={recurrente}
+              onChange={(e) => setRecurrente(e.target.checked)}
+              className="w-5 h-5"
+            />
+            <span className="text-[14px]">{recurrente ? "Gasto recurrente (cada mes)" : "Gasto único"}</span>
+          </label>
+        </div>
       </Card>
 
       {/* Cuotas */}

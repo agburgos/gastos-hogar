@@ -315,10 +315,10 @@ export default function DetallePage() {
               ← Desliza horizontalmente para ver todos los días • los días con gasto están resaltados
             </div>
           )}
-          <div ref={tableScrollRef} className="border border-[var(--border)] rounded-lg overflow-x-auto bg-white">
-          <table className="border-collapse text-[12px]" style={{ minWidth: "100%" }}>
+          <div ref={tableScrollRef} className="border border-[var(--border)] rounded-lg overflow-x-auto bg-[var(--paper-raised)]">
+          <table className="border-collapse text-[12px] text-[var(--ink)]" style={{ minWidth: "100%" }}>
             <thead>
-              <tr className="bg-[var(--accent)] text-white sticky top-0">
+              <tr className="bg-[var(--accent)] text-white sticky top-0 z-20">
                 <th
                   className="text-left px-3 py-2 font-bold sticky left-0 bg-[var(--accent)] z-10"
                   style={{ minWidth: 150 }}
