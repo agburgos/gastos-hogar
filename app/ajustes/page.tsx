@@ -317,13 +317,13 @@ export default function AjustesPage() {
                       <div className="flex gap-1">
                         <button
                           onClick={() => setEditandoMacro(macro.id)}
-                          className="text-[11px] px-2 py-1 bg-white rounded text-[var(--accent)] font-bold"
+                          className="text-[11px] px-2 py-1 bg-[var(--paper-raised)] rounded text-[var(--accent)] font-bold"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => handleEliminarMacro(macro.id, macro.nombre)}
-                          className="text-[11px] px-2 py-1 bg-white rounded text-[var(--red)] font-bold"
+                          className="text-[11px] px-2 py-1 bg-[var(--paper-raised)] rounded text-[var(--red)] font-bold"
                         >
                           Eliminar
                         </button>
@@ -333,7 +333,7 @@ export default function AjustesPage() {
                 </div>
 
                 {expandido && (
-                  <div className="bg-white p-2 space-y-1.5">
+                  <div className="bg-[var(--paper-raised)] p-2 space-y-1.5">
                     {macro.categorias.map((sub) => {
                       const editandoEstaSub = editandoSub === sub.id;
                       return editandoEstaSub ? (
@@ -359,13 +359,13 @@ export default function AjustesPage() {
                           <div className="flex gap-1">
                             <button
                               onClick={() => setEditandoSub(sub.id)}
-                              className="text-[10px] px-1.5 py-0.5 bg-white rounded text-[var(--accent)] font-bold"
+                              className="text-[10px] px-1.5 py-0.5 bg-[var(--paper-raised)] rounded text-[var(--accent)] font-bold"
                             >
                               Editar
                             </button>
                             <button
                               onClick={() => handleEliminarSub(sub.id, sub.nombre)}
-                              className="text-[10px] px-1.5 py-0.5 bg-white rounded text-[var(--red)] font-bold"
+                              className="text-[10px] px-1.5 py-0.5 bg-[var(--paper-raised)] rounded text-[var(--red)] font-bold"
                             >
                               Eliminar
                             </button>
@@ -479,7 +479,7 @@ function EditarMacroInline({
       </button>
       <button
         onClick={onCancelar}
-        className="text-[11px] px-2 py-1 bg-white rounded text-[var(--mid)] font-bold"
+        className="text-[11px] px-2 py-1 bg-[var(--paper-raised)] rounded text-[var(--mid)] font-bold"
       >
         ✕
       </button>
@@ -522,7 +522,7 @@ function EditarSubInline({
       </button>
       <button
         onClick={onCancelar}
-        className="text-[10px] px-1.5 py-1 bg-white rounded text-[var(--mid)] font-bold"
+        className="text-[10px] px-1.5 py-1 bg-[var(--paper-raised)] rounded text-[var(--mid)] font-bold"
       >
         ✕
       </button>

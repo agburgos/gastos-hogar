@@ -3,45 +3,45 @@
 :root {
   color-scheme: light dark;
 
-  /* Light mode (6am-6pm) */
-  --paper: #ffffff;
-  --paper-raised: #f5f5f5;
-  --paper-raised-2: #efefef;
-  --ink: #1a1a1a;
-  --ink-soft: #666666;
-  --ink-faint: #999999;
+  /* Light mode (6am-6pm) — cálido, no blanco puro */
+  --paper: #faf9f6;
+  --paper-raised: #ffffff;
+  --paper-raised-2: #f2f0ea;
+  --ink: #2b2926;
+  --ink-soft: #6b6660;
+  --ink-faint: #99938b;
 
-  /* Acento: rojo macOS */
-  --accent: #ff3b30;
-  --accent-bg: rgba(255, 59, 48, 0.15);
-  --accent-light: #ff5c52;
+  /* Acento: coral cálido (estilo Claude), no rojo puro */
+  --accent: #da7756;
+  --accent-bg: rgba(218, 119, 86, 0.14);
+  --accent-light: #e59274;
 
-  /* Colores macOS saturados por categoría (Light mode) */
-  --indigo: #5856d6;
-  --indigo-bg: rgba(88, 86, 214, 0.15);
-  --coral: #ff9500;
-  --coral-bg: rgba(255, 149, 0, 0.15);
-  --gold: #f5a623;
-  --gold-bg: rgba(245, 166, 35, 0.15);
-  --lime: #34c759;
-  --lime-bg: rgba(52, 199, 89, 0.15);
-  --teal: #00b4d8;
-  --teal-bg: rgba(0, 180, 216, 0.15);
+  /* Colores por categoría (Light mode) */
+  --indigo: #6366d6;
+  --indigo-bg: rgba(99, 102, 214, 0.14);
+  --coral: #da7756;
+  --coral-bg: rgba(218, 119, 86, 0.14);
+  --gold: #c9963f;
+  --gold-bg: rgba(201, 150, 63, 0.16);
+  --lime: #4a9d6e;
+  --lime-bg: rgba(74, 157, 110, 0.14);
+  --teal: #3d9aad;
+  --teal-bg: rgba(61, 154, 173, 0.14);
 
-  --green: #34c759;
-  --green-bg: rgba(52, 199, 89, 0.15);
-  --red: #ff3b30;
-  --red-bg: rgba(255, 59, 48, 0.15);
-  --yellow: #ffcc00;
-  --yellow-bg: rgba(255, 204, 0, 0.15);
+  --green: #4a9d6e;
+  --green-bg: rgba(74, 157, 110, 0.14);
+  --red: #c0554a;
+  --red-bg: rgba(192, 85, 74, 0.14);
+  --yellow: #c9963f;
+  --yellow-bg: rgba(201, 150, 63, 0.16);
 
-  --rule: rgba(0, 0, 0, 0.08);
-  --rule-strong: rgba(0, 0, 0, 0.15);
+  --rule: rgba(43, 41, 38, 0.1);
+  --rule-strong: rgba(43, 41, 38, 0.18);
 
-  --gradient: linear-gradient(135deg, #ff3b30 0%, #ff5c52 100%);
+  --gradient: linear-gradient(135deg, #da7756 0%, #e59274 100%);
 
   /* legacy aliases */
-  --linen: var(--paper);
+  --linen: var(--paper-raised-2);
   --warm-white: var(--paper-raised);
   --charcoal: var(--ink);
   --mid: var(--ink-soft);
@@ -51,42 +51,41 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* Dark mode (6pm-6am) */
-    --paper: #0a0a0a;
-    --paper-raised: #1a1a1a;
-    --paper-raised-2: #262626;
-    --ink: #f5f5f5;
-    --ink-soft: #b3b3b3;
-    --ink-faint: #808080;
+    /* Dark mode (6pm-6am) — carbón, no negro puro */
+    --paper: #1c1b19;
+    --paper-raised: #262421;
+    --paper-raised-2: #302e2a;
+    --ink: #f0ede8;
+    --ink-soft: #b8b2a8;
+    --ink-faint: #8a8478;
 
-    /* Acento: rojo macOS más brillante en dark */
-    --accent: #ff453a;
-    --accent-bg: rgba(255, 69, 58, 0.2);
-    --accent-light: #ff6b63;
+    /* Acento: coral más brillante en dark */
+    --accent: #e8926e;
+    --accent-bg: rgba(232, 146, 110, 0.18);
+    --accent-light: #f0ab8c;
 
-    /* Colores macOS saturados por categoría (Dark mode) */
-    --indigo: #5e5ce6;
-    --indigo-bg: rgba(94, 92, 230, 0.2);
-    --coral: #ff9500;
-    --coral-bg: rgba(255, 149, 0, 0.2);
-    --gold: #ffa500;
-    --gold-bg: rgba(255, 165, 0, 0.2);
-    --lime: #32d74b;
-    --lime-bg: rgba(50, 215, 75, 0.2);
-    --teal: #32ade6;
-    --teal-bg: rgba(50, 173, 230, 0.2);
+    --indigo: #8b8ef0;
+    --indigo-bg: rgba(139, 142, 240, 0.18);
+    --coral: #e8926e;
+    --coral-bg: rgba(232, 146, 110, 0.18);
+    --gold: #e0b35f;
+    --gold-bg: rgba(224, 179, 95, 0.18);
+    --lime: #6ec190;
+    --lime-bg: rgba(110, 193, 144, 0.18);
+    --teal: #5fbdd1;
+    --teal-bg: rgba(95, 189, 209, 0.18);
 
-    --green: #32d74b;
-    --green-bg: rgba(50, 215, 75, 0.2);
-    --red: #ff453a;
-    --red-bg: rgba(255, 69, 58, 0.2);
-    --yellow: #ffdd00;
-    --yellow-bg: rgba(255, 221, 0, 0.2);
+    --green: #6ec190;
+    --green-bg: rgba(110, 193, 144, 0.18);
+    --red: #e08579;
+    --red-bg: rgba(224, 133, 121, 0.18);
+    --yellow: #e0b35f;
+    --yellow-bg: rgba(224, 179, 95, 0.18);
 
-    --rule: rgba(255, 255, 255, 0.1);
-    --rule-strong: rgba(255, 255, 255, 0.2);
+    --rule: rgba(240, 237, 232, 0.1);
+    --rule-strong: rgba(240, 237, 232, 0.18);
 
-    --gradient: linear-gradient(135deg, #ff453a 0%, #ff6b63 100%);
+    --gradient: linear-gradient(135deg, #e8926e 0%, #f0ab8c 100%);
   }
 }
 

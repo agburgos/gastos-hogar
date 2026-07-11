@@ -403,7 +403,7 @@ export default function DetallePage() {
                               className="cursor-pointer hover:bg-[var(--accent-bg)]/20 border-t border-[var(--border)]/50"
                             >
                               <td
-                                className="px-3 py-1.5 pl-8 sticky left-0 bg-white z-10 text-[var(--charcoal)]"
+                                className="px-3 py-1.5 pl-8 sticky left-0 bg-[var(--paper-raised)] z-10 text-[var(--charcoal)]"
                                 style={{ minWidth: 150 }}
                               >
                                 <span className="mr-1 text-[10px]">{catExpanded ? "▼" : "▶"}</span>
@@ -428,10 +428,10 @@ export default function DetallePage() {
                               responsablesOrdenados.map((resp) => (
                                 <tr
                                   key={`${catKey}__${resp.nombre}`}
-                                  className="border-t border-[var(--border)]/30 bg-[var(--linen)]/40"
+                                  className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
                                 >
                                   <td
-                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--linen)] z-10 text-[11px] text-[var(--mid)]"
+                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)]"
                                     style={{ minWidth: 150 }}
                                   >
                                     —
@@ -575,7 +575,7 @@ function ModalGastosCelda({
       onClick={onCerrar}
     >
       <div
-        className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto p-4 space-y-3"
+        className="bg-[var(--paper-raised)] text-[var(--ink)] rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto p-4 space-y-3"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-start">

@@ -40,6 +40,7 @@ export default function DashboardPage() {
   const [deudasAlberto, setDeudasAlberto] = useState(0);
   const [alertasSub, setAlertasSub] = useState<SubAlerta[]>([]);
   const [deudasResumen, setDeudasResumen] = useState<DeudaResumen[]>([]);
+  const [deudasDeclaradas, setDeudasDeclaradas] = useState<DeudaResumen[]>([]);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -161,6 +162,9 @@ export default function DashboardPage() {
 
       const deudaspagando = deudasDetalle?.filter((d: any) => d.pagando) || [];
       setDeudasResumen(deudaspagando);
+
+      const deudasNoActivas = deudasDetalle?.filter((d: any) => !d.pagando) || [];
+      setDeudasDeclaradas(deudasNoActivas);
 
       let gloriaDebeNeto = 0;
       let albertoDebeNeto = 0;
@@ -342,23 +346,26 @@ export default function DashboardPage() {
       )}
 
       {/* DEUDAS */}
-      {(deudasGloria > 0 || deudasAlberto > 0) && (
-        <Card title="Deudas pendientes">
+      {(deudasGloria > 0 || deudasAlberto > 0 || deudasDeclaradas.length > 0) && (
+        <Card title="Deudas">
           <div className="space-y-3 text-[14px]">
-            <div className="space-y-2">
-              {deudasGloria > 0 && (
-                <div className="flex justify-between items-center">
-                  <span>Gloria debe:</span>
-                  <span className="font-bold text-[var(--red)]">{fmt(deudasGloria)}</span>
-                </div>
-              )}
-              {deudasAlberto > 0 && (
-                <div className="flex justify-between items-center">
-                  <span>Alberto debe:</span>
-                  <span className="font-bold text-[var(--red)]">{fmt(deudasAlberto)}</span>
-                </div>
-              )}
-            </div>
+            {(deudasGloria > 0 || deudasAlberto > 0) && (
+              <div className="space-y-2">
+                <div className="text-[12px] text-[var(--ink-soft)] font-medium">Debe pagar (activo):</div>
+                {deudasGloria > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>Gloria debe:</span>
+                    <span className="font-bold text-[var(--red)]">{fmt(deudasGloria)}</span>
+                  </div>
+                )}
+                {deudasAlberto > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>Alberto debe:</span>
+                    <span className="font-bold text-[var(--red)]">{fmt(deudasAlberto)}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {deudasResumen.length > 0 && (
               <div className="pt-2 border-t border-[var(--rule)]">
@@ -368,6 +375,22 @@ export default function DashboardPage() {
                     <div key={d.id} className="flex justify-between items-center text-[12px]">
                       <span className="text-[var(--mid)]">{d.nombre}</span>
                       <Badge color="green">↻ Pagando</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {deudasDeclaradas.length > 0 && (
+              <div className="pt-2 border-t border-[var(--rule)]">
+                <div className="text-[12px] text-[var(--ink-soft)] mb-1.5 font-medium">
+                  Declaradas (aún no se pagan):
+                </div>
+                <div className="space-y-1">
+                  {deudasDeclaradas.map((d) => (
+                    <div key={d.id} className="flex justify-between items-center text-[12px]">
+                      <span className="text-[var(--mid)]">{d.nombre}</span>
+                      <span className="text-[var(--ink-faint)]">{fmt(d.saldo_pendiente)}</span>
                     </div>
                   ))}
                 </div>
