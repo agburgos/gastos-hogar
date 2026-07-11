@@ -23,6 +23,11 @@ const AMBITOS = [
   { value: "ambos", label: "Ambos" },
 ];
 
+const USUARIOS = [
+  { id: "9a7597c3-de3c-4cdc-9bdf-78dde625cff0", nombre: "Gloria" },
+  { id: "6268104e-7c3c-4643-b4f6-7eb44a636f03", nombre: "Alberto" },
+];
+
 export default function NuevoPage() {
   const router = useRouter();
   const [monto, setMonto] = useState("");
@@ -39,12 +44,15 @@ export default function NuevoPage() {
   const [macros, setMacros] = useState<Macro[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [user, setUser] = useState<string | null>(null);
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user?.id || null);
+      const userId = data.session?.user?.id || null;
+      setUser(userId);
+      setResponsableSeleccionado(userId);
 
       const { data: macrosData } = await supabase
         .from("categorias_macro")
@@ -74,7 +82,7 @@ export default function NuevoPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!monto || !categoriaSeleccionada || !user) {
+    if (!monto || !categoriaSeleccionada || !responsableSeleccionado) {
       alert("Monto y categoría requeridos");
       return;
     }
@@ -105,7 +113,7 @@ export default function NuevoPage() {
             monto: parsedMonto,
             descripcion,
             categoria_id: categoriaSeleccionada,
-            responsable_id: user,
+            responsable_id: responsableSeleccionado,
             fecha: ymdLocal(nextFecha),
             compartido,
             ambito,
@@ -280,6 +288,26 @@ export default function NuevoPage() {
             />
             <span className="text-[14px]">{recurrente ? "Gasto recurrente (cada mes)" : "Gasto único"}</span>
           </label>
+        </div>
+      </Card>
+
+      {/* Responsable */}
+      <Card title="¿Quién gastó?">
+        <div className="flex gap-2">
+          {USUARIOS.map((u) => (
+            <button
+              key={u.id}
+              type="button"
+              onClick={() => setResponsableSeleccionado(u.id)}
+              className={`flex-1 px-3 py-2 rounded-lg font-bold text-[13px] transition-colors ${
+                responsableSeleccionado === u.id
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--accent-bg)] text-[var(--accent)]"
+              }`}
+            >
+              {u.nombre}
+            </button>
+          ))}
         </div>
       </Card>
 
