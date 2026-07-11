@@ -21,6 +21,7 @@ interface Deuda {
   acreedor_id: string | null;
   descripcion: string | null;
   activa: boolean;
+  pagando: boolean;
 }
 
 function nombrePorId(id: string | null) {
@@ -140,6 +141,76 @@ export default function DeudasPage() {
     await cargarDeudas();
   };
 
+  const handleActivarPago = async (deuda: Deuda) => {
+    if (!deuda.cuota_mensual || deuda.cuota_mensual <= 0) {
+      alert("Define primero una cuota mensual para activar el pago automático");
+      return;
+    }
+
+    if (!confirm(`Se generarán cuotas mensuales de ${fmt(deuda.cuota_mensual)} como gasto de ${nombrePorId(deuda.responsable_id)}. ¿Confirmar?`)) {
+      return;
+    }
+
+    // categoría destino para las cuotas: macro "Deudas" → primera subcategoría
+    const { data: macroDeudas } = await supabase
+      .from("categorias_macro")
+      .select("id")
+      .eq("nombre", "Deudas")
+      .single();
+
+    let categoriaId: string | null = null;
+    if (macroDeudas) {
+      const { data: subDeudas } = await supabase
+        .from("categorias")
+        .select("id")
+        .eq("macro_id", macroDeudas.id)
+        .order("orden")
+        .limit(1)
+        .single();
+      categoriaId = subDeudas?.id || null;
+    }
+
+    if (!categoriaId) {
+      alert("No se encontró la categoría 'Deudas'. Revisa el mantenedor de categorías en Ajustes.");
+      return;
+    }
+
+    const numCuotas = Math.min(12, Math.max(1, Math.ceil(deuda.saldo_pendiente / deuda.cuota_mensual)));
+    const hoy = new Date();
+    const cuotaGrupoId = crypto.randomUUID();
+    const filas = [];
+
+    for (let i = 0; i < numCuotas; i++) {
+      const fechaCuota = new Date(hoy.getFullYear(), hoy.getMonth() + 1 + i, 1);
+      filas.push({
+        monto: deuda.cuota_mensual,
+        descripcion: `Cuota: ${deuda.nombre}`,
+        categoria_id: categoriaId,
+        responsable_id: deuda.responsable_id,
+        fecha: ymdLocal(fechaCuota),
+        compartido: false,
+        ambito: "ninguno",
+        cuota_grupo_id: cuotaGrupoId,
+        cuota_numero: i + 1,
+        cuota_total: numCuotas,
+      });
+    }
+
+    const { error: gastoError } = await supabase.from("gastos").insert(filas);
+    if (gastoError) {
+      alert("Error al generar cuotas: " + gastoError.message);
+      return;
+    }
+
+    const { error } = await supabase.from("deudas").update({ pagando: true }).eq("id", deuda.id);
+    if (error) {
+      alert("Error al activar: " + error.message);
+      return;
+    }
+
+    await cargarDeudas();
+  };
+
   const handleEliminar = async (id: string, nombre: string) => {
     if (!confirm(`¿Eliminar deuda "${nombre}"?`)) return;
     const { error } = await supabase.from("deudas").delete().eq("id", id);
@@ -203,7 +274,21 @@ export default function DeudasPage() {
         </div>
 
         {deuda.cuota_mensual && (
-          <div className="text-[12px] text-[var(--mid)]">Cuota: {fmt(deuda.cuota_mensual)}/mes</div>
+          <div className="flex items-center justify-between text-[12px] text-[var(--mid)]">
+            <span>Cuota: {fmt(deuda.cuota_mensual)}/mes</span>
+            {deuda.pagando ? (
+              <Badge color="green">✓ Pagando</Badge>
+            ) : (
+              esDeudor && (
+                <button
+                  onClick={() => handleActivarPago(deuda)}
+                  className="text-[10px] px-2 py-1 bg-[var(--indigo-bg)] text-[var(--indigo)] rounded font-bold"
+                >
+                  Activar pago automático
+                </button>
+              )
+            )}
+          </div>
         )}
 
         {esDeudor && (

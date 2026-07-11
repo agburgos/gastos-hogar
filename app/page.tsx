@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, ProgressBar, Badge, Btn } from "@/components/ui";
+import CompararMeses from "@/components/CompararMeses";
 import { fmt, ymdLocal } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -199,21 +200,37 @@ export default function DashboardPage() {
     montoAPagar = saldoAlberto;
   }
 
-  const mesLabel = new Date(parseInt(mesSeleccionado.slice(0, 4)), parseInt(mesSeleccionado.slice(5, 7)) - 1, 1)
-    .toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+  const [añoSel, mesSelIdx] = mesSeleccionado.split("-").map(Number);
+  const mesLabel = new Date(añoSel, mesSelIdx - 1, 1).toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+
+  const cambiarMesSel = (delta: number) => {
+    const d = new Date(añoSel, mesSelIdx - 1 + delta, 1);
+    setMesSeleccionado(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  };
 
   return (
     <div className="pb-24">
       {/* HERO editorial: mes + total, tipografía enorme, sin caja */}
       <div className="rise-in -mx-4 px-4 pt-2 pb-8 mb-6" style={{ background: "var(--gradient)" }}>
-        <label className="!text-white/70">Mes en curso</label>
-        <input
-          type="month"
-          value={mesSeleccionado}
-          onChange={(e) => setMesSeleccionado(e.target.value)}
-          className="!bg-transparent !border-none !text-white !p-0 !text-[13px] font-semibold w-auto mb-3"
-          style={{ colorScheme: "dark" }}
-        />
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            type="button"
+            onClick={() => cambiarMesSel(-1)}
+            className="text-white/80 hover:text-white text-[15px] font-bold px-1"
+          >
+            ←
+          </button>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-white/70">
+            {mesLabel}
+          </span>
+          <button
+            type="button"
+            onClick={() => cambiarMesSel(1)}
+            className="text-white/80 hover:text-white text-[15px] font-bold px-1"
+          >
+            →
+          </button>
+        </div>
         <div className="display text-[15vw] sm:text-[64px] leading-[0.85] font-black text-white capitalize -ml-0.5">
           {mesLabel.split(" ")[0]}
         </div>
@@ -325,6 +342,9 @@ export default function DashboardPage() {
           </div>
         </>
       )}
+
+      <div className="h-8" />
+      <CompararMeses />
 
       {/* Botón flotante nuevo gasto */}
       <div className="fixed bottom-6 right-4 left-4 max-w-[480px] mx-auto z-30">
