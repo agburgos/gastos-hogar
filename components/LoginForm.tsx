@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginForm() {
@@ -8,11 +8,27 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recordarme, setRecordarme] = useState(false);
+
+  useEffect(() => {
+    const emailGuardado = localStorage.getItem("email_recordado");
+    if (emailGuardado) {
+      setEmail(emailGuardado);
+      setRecordarme(true);
+    }
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    if (recordarme) {
+      localStorage.setItem("email_recordado", email);
+    } else {
+      localStorage.removeItem("email_recordado");
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) setError(error.message === "Invalid login credentials" ? "Email o contraseña incorrectos" : error.message);
@@ -48,6 +64,17 @@ export default function LoginForm() {
               placeholder="••••••••"
               autoComplete="current-password"
             />
+          </div>
+          <div className="mb-3.5">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={recordarme}
+                onChange={(e) => setRecordarme(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-[13px] text-[var(--ink-soft)]">Recordarme en este dispositivo</span>
+            </label>
           </div>
           {error && <p className="text-[13px] font-medium text-[var(--red)] mb-3.5">{error}</p>}
           <button
