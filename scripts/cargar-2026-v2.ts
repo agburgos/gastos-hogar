@@ -86,31 +86,32 @@ const supabase = createClient(url, key, { auth: { persistSession: false } });
       const gastos: any[] = [];
 
       // Headers en fila 0: Correlativo, Día, Descripción, Categoría, Monto, Responsable
+      // Nota: Correlativo y Día suelen venir vacíos en las hojas de 2026 — no se usan
+      // como criterio de corte. Se procesa cualquier fila con monto válido.
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || row.length < 6) continue;
+        if (!row || row.length < 5) continue;
 
-        const correlativo = row[0];
         const dia = row[1];
         const descripcion = row[2];
         const categoriaOriginal = row[3];
         const monto = row[4];
         const responsable = row[5];
 
-        // Fin de tabla
-        if (!correlativo || correlativo.toString().toLowerCase() === "total") break;
-        if (!dia || !monto) continue;
+        // Fin de tabla: fila totalmente vacía (sin descripción ni monto)
+        if (!descripcion && !monto) continue;
+        if (String(descripcion || "").toLowerCase().trim() === "total") break;
+        if (!monto || isNaN(parseFloat(String(monto)))) continue;
 
-        // Parsear día
-        let diaNum = 0;
-        if (typeof dia === "number") {
+        // Parsear día; si no viene, usar día 1 del mes
+        let diaNum = 1;
+        if (typeof dia === "number" && dia > 0) {
           diaNum = Math.floor(dia);
         } else if (typeof dia === "string") {
           const match = dia.match(/^(\d+)/);
           if (match) diaNum = parseInt(match[1]);
         }
-
-        if (diaNum < 1 || diaNum > 31) continue;
+        if (diaNum < 1 || diaNum > 31) diaNum = 1;
 
         // Extraer mes del nombre de la hoja
         const mesMatch = mesNombre.match(/(\w+)\s+2026/i);
