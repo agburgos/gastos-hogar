@@ -1,88 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  /* Paper: cálido, no el blanco-frío típico de SaaS */
-  --paper: #FBF6EF;
-  --paper-raised: #FFFFFF;
-  --ink: #1B1A22;
-  --ink-soft: #5C5A6B;
-  --ink-faint: #9E9BAE;
+  /* Apple Music-inspired: oscuro sobrio, un solo acento */
+  --paper: #0B0B0D;
+  --paper-raised: #17171B;
+  --paper-raised-2: #202024;
+  --ink: #F5F5F7;
+  --ink-soft: #98989F;
+  --ink-faint: #5C5C63;
 
-  /* Vibrante: coral cálido + índigo eléctrico + lima ácido */
-  --coral: #FF5A3C;
-  --coral-bg: #FFE4DB;
-  --indigo: #4C3AFF;
-  --indigo-bg: #E6E1FF;
-  --lime: #C6F135;
-  --lime-bg: #F1FBCE;
-  --ink-bg: #E9E7F3;
+  --accent: #FA2D48;
+  --accent-bg: rgba(250, 45, 72, 0.14);
+  --accent-light: #FF5C74;
 
-  --green: #0E7A4E;
-  --green-bg: #D7F5E3;
-  --red: #E0382B;
-  --red-bg: #FFE1DC;
-  --yellow: #B9790A;
-  --yellow-bg: #FCEDC7;
+  --indigo: var(--accent);
+  --indigo-bg: var(--accent-bg);
+  --coral: var(--accent);
+  --coral-bg: var(--accent-bg);
+  --gold: var(--accent);
+  --gold-bg: var(--accent-bg);
+  --lime: var(--accent-light);
+  --lime-bg: var(--accent-bg);
+  --teal: #64D2FF;
+  --teal-bg: rgba(100, 210, 255, 0.14);
 
-  --rule: #E4DDD0;
-  --rule-strong: #1B1A22;
+  --green: #32D74B;
+  --green-bg: rgba(50, 215, 75, 0.14);
+  --red: #FF453A;
+  --red-bg: rgba(255, 69, 58, 0.14);
+  --yellow: #FFD60A;
+  --yellow-bg: rgba(255, 214, 10, 0.14);
 
-  --gradient: linear-gradient(115deg, var(--coral) 0%, var(--indigo) 100%);
+  --rule: rgba(255, 255, 255, 0.09);
+  --rule-strong: rgba(255, 255, 255, 0.16);
 
-  /* legacy aliases used across pages */
+  --gradient: linear-gradient(135deg, var(--accent) 0%, #FF6B5B 100%);
+
+  /* legacy aliases */
   --linen: var(--paper);
   --warm-white: var(--paper-raised);
   --charcoal: var(--ink);
   --mid: var(--ink-soft);
   --light: var(--ink-faint);
-  --accent: var(--indigo);
-  --accent-light: color-mix(in srgb, var(--indigo) 70%, white);
-  --accent-bg: var(--indigo-bg);
-  --gold: var(--coral);
-  --gold-bg: var(--coral-bg);
-  --teal: #0E7490;
-  --teal-bg: color-mix(in srgb, #0E7490 14%, white);
   --border: var(--rule);
-}
-
-@font-face {
-  font-display: swap;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
-  background-image:
-    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--lime) 18%, transparent) 0%, transparent 45%),
-    radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--coral) 10%, transparent) 0%, transparent 40%);
-  background-attachment: fixed;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
 }
 
 h1, h2, h3, .display {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: -0.01em;
+  font-family: var(--font-body), -apple-system, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 11px 13px;
-  border: 2px solid var(--rule);
-  border-radius: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
   font-size: 15px;
   font-family: var(--font-body), sans-serif;
   background: var(--paper-raised);
   color: var(--ink);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--ink);
-  box-shadow: 3px 3px 0 var(--lime);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 textarea {
   resize: none;
@@ -91,14 +84,12 @@ textarea {
 label {
   display: block;
   font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
   color: var(--ink-soft);
 }
 
-/* Animaciones sutiles */
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -108,15 +99,15 @@ label {
   to { opacity: 1; transform: translateX(0); }
 }
 .rise-in {
-  animation: riseIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: riseIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .slide-in {
-  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 ::selection {
-  background: var(--lime);
-  color: var(--ink);
+  background: var(--accent);
+  color: white;
 }
 
 * {

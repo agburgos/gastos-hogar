@@ -112,7 +112,7 @@ export default function CompararMeses() {
 
   return (
     <div className="rise-in">
-      <h2 className="display text-[22px] italic font-medium mb-4">Comparar meses</h2>
+      <h2 className="text-[15px] font-bold mb-3">Comparar meses</h2>
 
       <div className="flex flex-wrap gap-2 mb-2">
         <select
@@ -167,26 +167,26 @@ export default function CompararMeses() {
       </div>
 
       {loading ? (
-        <div className="text-[13px] text-[var(--mid)] py-6">Cargando...</div>
+        <div className="text-[13px] text-[var(--ink-soft)] py-6">Cargando...</div>
       ) : (
-        <div className="flex items-end gap-2 sm:gap-4 h-[160px] mt-6 border-b-2 border-[var(--ink)] pb-0">
+        <div className="bg-[var(--paper-raised)] rounded-2xl p-4 flex items-end gap-2 sm:gap-4 h-[160px] mt-2">
           {datos.map((d, i) => {
             const h = max > 0 ? Math.max((d.total / max) * 100, d.total > 0 ? 4 : 0) : 0;
             const isLast = i === datos.length - 1;
             return (
               <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                <div className="text-[10px] font-bold text-[var(--ink-soft)] mb-1 whitespace-nowrap">
+                <div className="text-[10px] font-semibold text-[var(--ink-soft)] mb-1 whitespace-nowrap">
                   {d.total > 0 ? fmt(d.total).replace("$", "") : ""}
                 </div>
                 <div
-                  className="w-full transition-all duration-500 ease-out"
+                  className="w-full rounded-t-md transition-all duration-500 ease-out"
                   style={{
                     height: `${h}%`,
-                    background: isLast ? "var(--coral)" : "var(--indigo)",
+                    background: isLast ? "var(--accent)" : "rgba(255,255,255,0.18)",
                     minHeight: d.total > 0 ? 4 : 0,
                   }}
                 />
-                <div className="text-[10px] font-bold uppercase text-[var(--ink-soft)] mt-1.5">{d.label}</div>
+                <div className="text-[10px] font-semibold uppercase text-[var(--ink-soft)] mt-1.5">{d.label}</div>
               </div>
             );
           })}

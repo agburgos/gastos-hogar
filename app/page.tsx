@@ -210,62 +210,54 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-24">
-      {/* HERO editorial: mes + total, tipografía enorme, sin caja */}
-      <div className="rise-in -mx-4 px-4 pt-2 pb-8 mb-6" style={{ background: "var(--gradient)" }}>
-        <div className="flex items-center gap-3 mb-3">
+      {/* HERO sobrio: mes + total */}
+      <div className="rise-in mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <button
             type="button"
             onClick={() => cambiarMesSel(-1)}
-            className="text-white/80 hover:text-white text-[15px] font-bold px-1"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/8 text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-white/12 transition-colors"
           >
-            ←
+            ‹
           </button>
-          <span className="text-[11px] font-bold uppercase tracking-widest text-white/70">
+          <span className="text-[13px] font-semibold text-[var(--ink-soft)] capitalize min-w-[120px] text-center">
             {mesLabel}
           </span>
           <button
             type="button"
             onClick={() => cambiarMesSel(1)}
-            className="text-white/80 hover:text-white text-[15px] font-bold px-1"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/8 text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-white/12 transition-colors"
           >
-            →
+            ›
           </button>
         </div>
-        <div className="display text-[15vw] sm:text-[64px] leading-[0.85] font-black text-white capitalize -ml-0.5">
-          {mesLabel.split(" ")[0]}
-        </div>
-        <div className="flex items-end justify-between mt-4">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-widest text-white/70">Gastado</div>
-            <div className="display text-[38px] italic font-medium text-white leading-none">{fmt(totalGasto)}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-[11px] font-bold uppercase tracking-widest text-white/70">Gloria / Alberto</div>
-            <div className="text-[15px] font-bold text-white">{fmt(gloria)} · {fmt(alberto)}</div>
-          </div>
+        <div className="text-[13px] font-semibold text-[var(--ink-soft)] mb-1">Gastado este mes</div>
+        <div className="text-[48px] font-extrabold text-[var(--ink)] leading-none tracking-tight">{fmt(totalGasto)}</div>
+        <div className="text-[13px] font-medium text-[var(--ink-soft)] mt-2">
+          Gloria {fmt(gloria)} · Alberto {fmt(alberto)}
         </div>
       </div>
 
-      {/* Balance: tratamiento único, no card */}
+      {/* Balance */}
       {montoAPagar > 0 ? (
-        <div className="slide-in mb-8 flex items-center gap-4">
+        <div className="slide-in mb-6 bg-[var(--paper-raised)] rounded-2xl p-4 flex items-center gap-3">
           <div
-            className="display text-[46px] italic font-black leading-none shrink-0"
-            style={{ color: "var(--coral)" }}
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-[15px] font-bold"
+            style={{ background: "var(--accent)" }}
           >
             →
           </div>
           <div>
-            <div className="text-[15px] font-semibold leading-tight">{resumenPago}</div>
-            <div className="display text-[24px] font-bold" style={{ color: "var(--coral)" }}>
+            <div className="text-[14px] font-semibold leading-tight">{resumenPago}</div>
+            <div className="text-[20px] font-extrabold" style={{ color: "var(--accent)" }}>
               {fmt(montoAPagar)}
             </div>
           </div>
         </div>
       ) : (
-        <div className="slide-in mb-8 flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full shrink-0" style={{ background: "var(--lime)" }} />
-          <span className="display text-[18px] italic">Cuentas balanceadas</span>
+        <div className="slide-in mb-6 bg-[var(--paper-raised)] rounded-2xl p-4 flex items-center gap-3">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--green)" }} />
+          <span className="text-[14px] font-semibold">Cuentas balanceadas</span>
         </div>
       )}
 
@@ -313,26 +305,24 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* PRESUPUESTO POR CATEGORÍA: grid asimétrico, no stack uniforme */}
+      {/* PRESUPUESTO POR CATEGORÍA */}
       {ingreso > 0 && macros.length > 0 && (
-        <>
-          <h2 className="display text-[22px] italic font-medium mb-4 mt-2">Presupuesto</h2>
-          <div className="grid grid-cols-2 gap-x-5 gap-y-6">
-            {macros.map((macro, i) => {
+        <div className="mb-2">
+          <h2 className="text-[15px] font-bold mb-3 mt-2">Presupuesto</h2>
+          <div className="bg-[var(--paper-raised)] rounded-2xl divide-y divide-[var(--rule)]">
+            {macros.map((macro) => {
               const pct = ingreso > 0 ? (macro.total_gastado / (ingreso * macro.pct_objetivo)) * 100 : 0;
               const objetivo = ingreso * macro.pct_objetivo;
               const restante = objetivo - macro.total_gastado;
-              // asimetría: cada 3er item ocupa el ancho completo
-              const wide = i % 3 === 0;
 
               return (
-                <div key={macro.id} className={`rise-in ${wide ? "col-span-2" : "col-span-1"}`} style={{ animationDelay: `${i * 40}ms` }}>
+                <div key={macro.id} className="p-4">
                   <div className="flex justify-between items-baseline mb-1.5">
-                    <span className="text-[13px] font-bold">{macro.nombre}</span>
+                    <span className="text-[14px] font-semibold">{macro.nombre}</span>
                     <Badge color={pct >= 100 ? "red" : pct >= 80 ? "yellow" : "green"}>{Math.round(pct)}%</Badge>
                   </div>
                   <ProgressBar pct={pct} />
-                  <div className="flex justify-between mt-1.5 text-[11px] text-[var(--mid)]">
+                  <div className="flex justify-between mt-1.5 text-[12px] text-[var(--ink-soft)]">
                     <span>{fmt(macro.total_gastado)}</span>
                     <span>{restante > 0 ? `+${fmt(restante)}` : `−${fmt(Math.abs(restante))}`}</span>
                   </div>
@@ -340,10 +330,10 @@ export default function DashboardPage() {
               );
             })}
           </div>
-        </>
+        </div>
       )}
 
-      <div className="h-8" />
+      <div className="h-4" />
       <CompararMeses />
 
       {/* Botón flotante nuevo gasto */}

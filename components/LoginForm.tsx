@@ -20,17 +20,13 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "var(--paper)" }}>
-      <div className="w-full max-w-[360px] rise-in">
-        <div className="mb-10">
-          <div className="display text-[52px] italic font-medium leading-none" style={{ color: "var(--ink)" }}>
-            Casa
-          </div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.25em] mt-1" style={{ color: "var(--coral)" }}>
-            Garrido · Roa
-          </div>
+      <div className="w-full max-w-[340px] rise-in">
+        <div className="mb-10 text-center">
+          <div className="text-[28px] font-extrabold tracking-tight text-[var(--ink)]">Casa</div>
+          <div className="text-[13px] font-medium text-[var(--ink-soft)] mt-1">Garrido · Roa</div>
         </div>
 
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="bg-[var(--paper-raised)] rounded-2xl p-5">
           <div className="mb-3.5">
             <label>Email</label>
             <input
@@ -53,12 +49,12 @@ export default function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          {error && <p className="text-[13px] font-semibold text-[var(--red)] mb-3.5">{error}</p>}
+          {error && <p className="text-[13px] font-medium text-[var(--red)] mb-3.5">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 text-base font-bold rounded-sm text-white disabled:opacity-50 border-2 border-[var(--ink)] hover:shadow-[3px_3px_0_var(--lime)] active:translate-y-[1px] transition-all"
-            style={{ background: "var(--gradient)" }}
+            className="w-full py-3.5 text-[15px] font-semibold rounded-full text-white disabled:opacity-50"
+            style={{ background: "var(--accent)" }}
           >
             {loading ? "Ingresando…" : "Ingresar"}
           </button>

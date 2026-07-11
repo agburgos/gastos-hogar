@@ -151,11 +151,11 @@ export default function NuevoPage() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 pb-4">
-      {/* Monto: foco absoluto de la pantalla, tipografía enorme */}
-      <div className="rise-in -mx-4 px-4 pt-4 pb-8 mb-2 text-center" style={{ background: "var(--gradient)" }}>
-        <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/70 mb-2">¿Cuánto fue?</div>
+      {/* Monto */}
+      <div className="rise-in bg-[var(--paper-raised)] rounded-2xl pt-6 pb-7 mb-2 text-center">
+        <div className="text-[12px] font-semibold text-[var(--ink-soft)] mb-2">¿Cuánto fue?</div>
         <div className="flex items-center justify-center gap-1">
-          <span className="display text-[32px] italic text-white/80">$</span>
+          <span className="text-[26px] font-bold text-[var(--ink-soft)]">$</span>
           <input
             type="number"
             step="0.01"
@@ -163,7 +163,7 @@ export default function NuevoPage() {
             value={monto}
             onChange={(e) => setMonto(e.target.value)}
             autoFocus
-            className="!bg-transparent !border-none !p-0 display text-[64px] font-black text-white text-center w-[60%] leading-none"
+            className="!bg-transparent !border-none !p-0 text-[52px] font-extrabold text-[var(--ink)] text-center w-[55%] leading-none"
           />
         </div>
       </div>
