@@ -356,9 +356,11 @@ export default function NuevoPage() {
                   +
                 </button>
               </div>
-              <div className="text-[12px] text-[var(--ink-faint)] mt-2">
-                Dividiré ${(parsedMonto / numCuotas).toFixed(0)} por cuota aprox.
-              </div>
+              {monto && (
+                <div className="text-[12px] text-[var(--ink-faint)] mt-2">
+                  Dividiré ${(parseFloat(monto) / numCuotas).toFixed(0)} por cuota aprox.
+                </div>
+              )}
             </div>
             <button
               type="button"
