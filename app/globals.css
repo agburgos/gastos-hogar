@@ -1,40 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  /* Apple Music-inspired: oscuro sobrio, un solo acento */
-  --paper: #0B0B0D;
-  --paper-raised: #17171B;
-  --paper-raised-2: #202024;
-  --ink: #F5F5F7;
-  --ink-soft: #98989F;
-  --ink-faint: #5C5C63;
+  /* Paleta pastel clara y sobria */
+  --paper: #F8F7F4;
+  --paper-raised: #FFFFFF;
+  --paper-raised-2: #F9F9F7;
+  --ink: #2C2C2C;
+  --ink-soft: #6B6B6B;
+  --ink-faint: #A8A8A8;
 
-  --accent: #FA2D48;
-  --accent-bg: rgba(250, 45, 72, 0.14);
-  --accent-light: #FF5C74;
+  /* Acento: rosa pastel suave */
+  --accent: #FF6B9D;
+  --accent-bg: rgba(255, 107, 157, 0.12);
+  --accent-light: #FF8FA3;
 
-  --indigo: var(--accent);
-  --indigo-bg: var(--accent-bg);
-  --coral: var(--accent);
-  --coral-bg: var(--accent-bg);
-  --gold: var(--accent);
-  --gold-bg: var(--accent-bg);
-  --lime: var(--accent-light);
-  --lime-bg: var(--accent-bg);
-  --teal: #64D2FF;
-  --teal-bg: rgba(100, 210, 255, 0.14);
+  /* Colores pastel por categoría */
+  --indigo: #A8B5FF;
+  --indigo-bg: rgba(168, 181, 255, 0.14);
+  --coral: #FFB3D9;
+  --coral-bg: rgba(255, 179, 217, 0.14);
+  --gold: #FFD699;
+  --gold-bg: rgba(255, 214, 153, 0.14);
+  --lime: #B3FFD9;
+  --lime-bg: rgba(179, 255, 217, 0.14);
+  --teal: #99D9FF;
+  --teal-bg: rgba(153, 217, 255, 0.14);
 
-  --green: #32D74B;
-  --green-bg: rgba(50, 215, 75, 0.14);
-  --red: #FF453A;
-  --red-bg: rgba(255, 69, 58, 0.14);
-  --yellow: #FFD60A;
-  --yellow-bg: rgba(255, 214, 10, 0.14);
+  --green: #66CC99;
+  --green-bg: rgba(102, 204, 153, 0.14);
+  --red: #FF8A80;
+  --red-bg: rgba(255, 138, 128, 0.14);
+  --yellow: #FFD680;
+  --yellow-bg: rgba(255, 214, 128, 0.14);
 
-  --rule: rgba(255, 255, 255, 0.09);
-  --rule-strong: rgba(255, 255, 255, 0.16);
+  --rule: rgba(0, 0, 0, 0.06);
+  --rule-strong: rgba(0, 0, 0, 0.12);
 
-  --gradient: linear-gradient(135deg, var(--accent) 0%, #FF6B5B 100%);
+  --gradient: linear-gradient(135deg, var(--accent) 0%, #FF8FA3 100%);
 
   /* legacy aliases */
   --linen: var(--paper);
