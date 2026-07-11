@@ -239,6 +239,8 @@ export default function DetallePage() {
       className="space-y-3 w-screen relative left-1/2 -translate-x-1/2 max-w-none px-4"
       style={{ maxWidth: "100vw" }}
     >
+      <h1 className="text-[18px] font-bold px-1">Detalle de gastos del mes</h1>
+
       {/* Navegación de mes */}
       <Card>
         <div className="flex items-center justify-between">
@@ -550,8 +552,8 @@ export default function DetallePage() {
               })}
             </tbody>
             <tfoot>
-              <tr className="bg-[var(--charcoal)] text-white border-t-2 border-[var(--accent)] sticky bottom-0">
-                <td className="px-3 py-2 font-bold sticky left-0 bg-[var(--charcoal)] z-10" style={{ minWidth: 150 }}>
+              <tr className="bg-[var(--accent)] text-white border-t-2 border-[var(--accent)] sticky bottom-0">
+                <td className="px-3 py-2 font-bold sticky left-0 bg-[var(--accent)] z-10" style={{ minWidth: 150 }}>
                   TOTAL
                 </td>
                 <td className="px-2 py-2"></td>
