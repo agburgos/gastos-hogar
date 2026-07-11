@@ -1,7 +1,7 @@
 export function Card({ title, children, accent = false }: { title?: string; children: React.ReactNode; accent?: boolean }) {
   return (
     <div
-      className={`bg-[var(--warm-white)] rounded-2xl p-4 mb-3 border shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(31,122,92,0.06)] ${
+      className={`bg-[var(--warm-white)] rounded-2xl p-4 mb-3 border shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(79,70,229,0.06)] ${
         accent ? "border-[var(--accent-light)] border-l-[4px]" : "border-[var(--border)]"
       }`}
     >
@@ -63,7 +63,7 @@ export function Btn({
   disabled?: boolean;
 }) {
   const variants: Record<string, string> = {
-    primary: "text-white py-3.5 text-base font-bold rounded-xl w-full shadow-md shadow-[rgba(31,122,92,0.25)]",
+    primary: "text-white py-3.5 text-base font-bold rounded-xl w-full shadow-md shadow-[rgba(79,70,229,0.25)]",
     secondary: "bg-[var(--accent-bg)] text-[var(--accent)] py-3.5 text-base font-bold rounded-xl w-full",
     ghost: "bg-transparent border-[1.5px] border-[var(--border)] text-[var(--charcoal)] py-2.5 text-sm font-bold rounded-xl w-full",
     danger: "bg-[var(--red-bg)] text-[var(--red)] py-2.5 text-sm font-bold rounded-xl w-full",

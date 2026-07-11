@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --linen: #F3F7F5;
+  --linen: #F6F7FB;
   --warm-white: #FFFFFF;
-  --charcoal: #1C2A24;
-  --mid: #5D7069;
-  --light: #B9CCC3;
-  --accent: #1F7A5C;
+  --charcoal: #1A1D29;
+  --mid: #64708A;
+  --light: #C4CBDB;
+  --accent: #4F46E5;
   --accent-light: color-mix(in srgb, var(--accent) 70%, white);
-  --accent-bg: color-mix(in srgb, var(--accent) 14%, white);
-  --gold: #C8932A;
-  --gold-bg: color-mix(in srgb, var(--gold) 22%, white);
-  --teal: #1F6A7A;
-  --teal-bg: color-mix(in srgb, var(--teal) 16%, white);
-  --green: #1E7A4B;
-  --green-bg: #D7F3E1;
-  --red: #C23B2B;
-  --red-bg: #FCE2DC;
-  --yellow: #9A6B0C;
-  --yellow-bg: #FBEAC4;
-  --border: #DCE8E2;
-  --gradient: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 50%, var(--gold)) 55%, var(--gold) 100%);
+  --accent-bg: color-mix(in srgb, var(--accent) 10%, white);
+  --gold: #B45309;
+  --gold-bg: #FDECD3;
+  --teal: #0E7490;
+  --teal-bg: color-mix(in srgb, var(--teal) 14%, white);
+  --green: #15803D;
+  --green-bg: #DCFCE7;
+  --red: #DC2626;
+  --red-bg: #FEE2E2;
+  --yellow: #B45309;
+  --yellow-bg: #FEF3C7;
+  --border: #E2E5F0;
+  --gradient: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 60%, #6366F1) 100%);
 }
 
 body {

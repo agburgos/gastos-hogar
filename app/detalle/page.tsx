@@ -318,7 +318,7 @@ export default function DetallePage() {
           <div ref={tableScrollRef} className="border border-[var(--border)] rounded-lg overflow-x-auto bg-white">
           <table className="border-collapse text-[12px]" style={{ minWidth: "100%" }}>
             <thead>
-              <tr className="bg-[var(--gradient)] text-white sticky top-0">
+              <tr className="bg-[var(--accent)] text-white sticky top-0">
                 <th
                   className="text-left px-3 py-2 font-bold sticky left-0 bg-[var(--accent)] z-10"
                   style={{ minWidth: 150 }}
@@ -336,11 +336,15 @@ export default function DetallePage() {
                   return (
                   <th
                     key={dia}
-                    className={`text-right px-2 py-2 font-bold ${tieneGasto ? "bg-[var(--gold)]/30" : ""}`}
+                    className={`text-right px-2 py-2 font-bold ${
+                      tieneGasto ? "bg-[var(--gold-bg)] text-[var(--charcoal)]" : ""
+                    }`}
                     style={{ minWidth: colWidth }}
                   >
                     <div className="leading-tight">
-                      <div className="text-[10px] font-normal opacity-80 capitalize">{nombreDia(dia)}</div>
+                      <div className={`text-[10px] font-normal capitalize ${tieneGasto ? "opacity-70" : "opacity-80"}`}>
+                        {nombreDia(dia)}
+                      </div>
                       <div>{dia}</div>
                     </div>
                   </th>
@@ -375,7 +379,7 @@ export default function DetallePage() {
                         <td
                           key={dia}
                           className={`text-right px-2 py-2 ${
-                            diasConGasto.includes(dia) ? "bg-[var(--gold)]/10" : ""
+                            diasConGasto.includes(dia) ? "bg-[var(--gold-bg)]/50" : ""
                           }`}
                         >
                           {macro.porDia.get(dia) ? fmt(macro.porDia.get(dia)!) : ""}
@@ -411,7 +415,7 @@ export default function DetallePage() {
                                 <td
                                   key={dia}
                                   className={`text-right px-2 py-1.5 text-[var(--mid)] ${
-                                    diasConGasto.includes(dia) ? "bg-[var(--gold)]/10" : ""
+                                    diasConGasto.includes(dia) ? "bg-[var(--gold-bg)]/50" : ""
                                   }`}
                                 >
                                   {cat.porDia.get(dia) ? fmt(cat.porDia.get(dia)!) : ""}
