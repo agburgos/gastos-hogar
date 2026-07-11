@@ -466,84 +466,47 @@ export default function DetallePage() {
                               ))}
                             </tr>
 
-                            {/* Filas de responsable (si categoría expandida), ordenadas alfabéticamente */}
+                            {/* Filas de gastos individuales (si categoría expandida) */}
                             {catExpanded &&
-                              responsablesOrdenados.map((resp) => {
-                                const gastosDelResponsable = gastosRaw.filter(
+                              gastosRaw
+                                .filter(
                                   (g) =>
-                                    g.macro === macro.nombre &&
-                                    g.categoria === cat.nombre &&
-                                    g.responsable === resp.nombre
-                                );
-                                const tituloSiUnico =
-                                  gastosDelResponsable.length === 1
-                                    ? gastosDelResponsable[0].descripcion
-                                    : null;
-
-                                return (
-                                <tr
-                                  key={`${catKey}__${resp.nombre}`}
-                                  className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
-                                >
-                                  <td
-                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
-                                    style={{ minWidth: 150, maxWidth: 150 }}
-                                  >
-                                    {tituloSiUnico || "—"}
-                                  </td>
-                                  <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
-                                    {resp.nombre}
-                                  </td>
-                                  <td className="text-right px-3 py-1 text-[11px] font-semibold">
-                                    {fmt(resp.total)}
-                                  </td>
-                                  {diasDelMes.map((dia) => {
-                                    const monto = resp.porDia.get(dia);
-                                    const gastosCelda = monto
-                                      ? gastosRaw.filter(
-                                          (g) =>
-                                            g.macro === macro.nombre &&
-                                            g.categoria === cat.nombre &&
-                                            g.responsable === resp.nombre &&
-                                            parseInt(g.fecha.slice(8, 10)) === dia
-                                        )
-                                      : [];
-                                    const tituloUnico =
-                                      gastosCelda.length === 1 ? gastosCelda[0].descripcion : null;
-                                    return (
+                                    g.macro === macro.nombre && g.categoria === cat.nombre
+                                )
+                                .map((gasto) => {
+                                  const gasto_dia = parseInt(gasto.fecha.slice(8, 10));
+                                  return (
+                                    <tr
+                                      key={gasto.id}
+                                      className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
+                                    >
                                       <td
-                                        key={dia}
-                                        onClick={() =>
-                                          monto &&
-                                          setCeldaSeleccionada({
-                                            macro: macro.nombre,
-                                            categoria: cat.nombre,
-                                            responsable: resp.nombre,
-                                            dia,
-                                          })
-                                        }
-                                        className={`text-right px-2 py-1 text-[11px] text-[var(--mid)] ${
-                                          monto ? "cursor-pointer underline decoration-dotted hover:bg-[var(--accent-bg)]" : ""
-                                        }`}
+                                        className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
+                                        style={{ minWidth: 150, maxWidth: 150 }}
                                       >
-                                        {monto ? (
-                                          <div className="leading-tight">
-                                            <div>{fmt(monto)}</div>
-                                            {tituloUnico && (
-                                              <div className="text-[9px] text-[var(--ink-faint)] truncate max-w-[80px] ml-auto">
-                                                {tituloUnico}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          ""
-                                        )}
+                                        {gasto.descripcion || "Sin descripción"}
                                       </td>
-                                    );
-                                  })}
-                                </tr>
-                                );
-                              })}
+                                      <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
+                                        {gasto.responsable}
+                                      </td>
+                                      <td className="text-right px-3 py-1 text-[11px] font-semibold">
+                                        {fmt(gasto.monto)}
+                                      </td>
+                                      {diasDelMes.map((dia) => (
+                                        <td
+                                          key={dia}
+                                          className={`text-right px-2 py-1 text-[11px] text-[var(--mid)] ${
+                                            dia === gasto_dia
+                                              ? "font-bold text-[var(--accent)]"
+                                              : ""
+                                          }`}
+                                        >
+                                          {dia === gasto_dia ? fmt(gasto.monto) : ""}
+                                        </td>
+                                      ))}
+                                    </tr>
+                                  );
+                                })}
                           </React.Fragment>
                         );
                       })}

@@ -12,9 +12,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Casa Garrido Roa",
   description: "Control de presupuesto y gasto familiar — Garrido Roa.",
-  icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>💰</text></svg>",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gastos Hogar",
   },
+  icons: {
+    icon: "/favicon.png",
+    apple: "/icon-192.png",
+  },
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
