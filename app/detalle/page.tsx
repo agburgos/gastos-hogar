@@ -466,16 +466,28 @@ export default function DetallePage() {
 
                             {/* Filas de responsable (si categoría expandida), ordenadas alfabéticamente */}
                             {catExpanded &&
-                              responsablesOrdenados.map((resp) => (
+                              responsablesOrdenados.map((resp) => {
+                                const gastosDelResponsable = gastosRaw.filter(
+                                  (g) =>
+                                    g.macro === macro.nombre &&
+                                    g.categoria === cat.nombre &&
+                                    g.responsable === resp.nombre
+                                );
+                                const tituloSiUnico =
+                                  gastosDelResponsable.length === 1
+                                    ? gastosDelResponsable[0].descripcion
+                                    : null;
+
+                                return (
                                 <tr
                                   key={`${catKey}__${resp.nombre}`}
                                   className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
                                 >
                                   <td
-                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)]"
-                                    style={{ minWidth: 150 }}
+                                    className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
+                                    style={{ minWidth: 150, maxWidth: 150 }}
                                   >
-                                    —
+                                    {tituloSiUnico || "—"}
                                   </td>
                                   <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
                                     {resp.nombre}
@@ -528,7 +540,8 @@ export default function DetallePage() {
                                     );
                                   })}
                                 </tr>
-                              ))}
+                                );
+                              })}
                           </React.Fragment>
                         );
                       })}

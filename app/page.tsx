@@ -150,12 +150,22 @@ export default function DashboardPage() {
       // Auto-descuento: para deudas activas, calcular cuántos meses han pasado
       // desde que se activó el pago y descontar esa cantidad de cuotas del saldo.
       // No depende de gastos generados — es puro cálculo de fechas.
+      // También calculamos cuánto corresponde SOLO a este mes (para el balance mensual,
+      // que no debe incluir el saldo total del préstamo, solo la cuota del mes).
       const { data: deudasParaSync } = await supabase
         .from("deuda_saldos")
-        .select("id, monto_total, monto_pagado, cuota_mensual, fecha_activacion_pago, pagando")
+        .select(
+          "id, monto_total, monto_pagado, cuota_mensual, fecha_activacion_pago, pagando, responsable_id, acreedor_id"
+        )
         .eq("pagando", true)
         .not("cuota_mensual", "is", null)
         .not("fecha_activacion_pago", "is", null);
+
+      const cuotasEsteMesPorDeuda: {
+        responsable_id: string;
+        acreedor_id: string | null;
+        cuotaEsteMes: number;
+      }[] = [];
 
       if (deudasParaSync && deudasParaSync.length > 0) {
         const hoy = new Date();
@@ -166,7 +176,18 @@ export default function DashboardPage() {
             (hoy.getMonth() - inicio.getMonth()) +
             1;
           const cuotasPasadas = Math.max(0, mesesTranscurridos);
+          const montoPagadoAntes = Math.min(
+            Math.max(0, cuotasPasadas - 1) * d.cuota_mensual,
+            d.monto_total
+          );
           const totalCalculado = Math.min(cuotasPasadas * d.cuota_mensual, d.monto_total);
+          const cuotaEsteMes = Math.max(0, totalCalculado - montoPagadoAntes);
+
+          cuotasEsteMesPorDeuda.push({
+            responsable_id: d.responsable_id,
+            acreedor_id: d.acreedor_id,
+            cuotaEsteMes,
+          });
 
           if (totalCalculado !== d.monto_pagado) {
             await supabase
@@ -200,19 +221,19 @@ export default function DashboardPage() {
       let gloriaDebeNeto = 0;
       let albertoDebeNeto = 0;
 
-      // Solo contar deudas que están ACTIVAS (pagando = true) para el balance del mes
-      deudaspagando.forEach((d: any) => {
-        const saldo = d.saldo_pendiente || 0;
-        if (saldo <= 0) return;
+      // Balance del mes: solo la cuota de ESTE mes por cada deuda activa, no el saldo total
+      cuotasEsteMesPorDeuda.forEach((d) => {
+        const cuota = d.cuotaEsteMes;
+        if (cuota <= 0) return;
         if (d.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
-          gloriaDebeNeto += saldo;
+          gloriaDebeNeto += cuota;
         } else if (d.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
-          albertoDebeNeto += saldo;
+          albertoDebeNeto += cuota;
         }
         if (d.acreedor_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
-          gloriaDebeNeto -= saldo;
+          gloriaDebeNeto -= cuota;
         } else if (d.acreedor_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
-          albertoDebeNeto -= saldo;
+          albertoDebeNeto -= cuota;
         }
       });
 
