@@ -127,7 +127,7 @@ export default function NuevoPage() {
           monto: parsedMonto,
           descripcion,
           categoria_id: categoriaSeleccionada,
-          responsable_id: user,
+          responsable_id: responsableSeleccionado,
           fecha: ymdLocal(fechaBase),
           compartido,
           ambito,
