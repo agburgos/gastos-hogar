@@ -27,6 +27,7 @@ export default function NuevoPage() {
   const router = useRouter();
   const [monto, setMonto] = useState("");
   const [fecha, setFecha] = useState(ymdLocal(new Date()));
+  const [mesSelector, setMesSelector] = useState<"actual" | "proximo">("actual");
   const [compartido, setCompartido] = useState(true);
   const [descripcion, setDescripcion] = useState("");
   const [ambito, setAmbito] = useState("ninguno");
@@ -88,12 +89,16 @@ export default function NuevoPage() {
       const parsedMonto = parseFloat(monto);
       const filas = [];
 
+      let fechaBase = new Date(fecha + "T00:00:00");
+      if (mesSelector === "proximo") {
+        fechaBase.setMonth(fechaBase.getMonth() + 1);
+      }
+
       if (cuotas && numCuotas > 1) {
         const cuotaGrupoId = crypto.randomUUID();
-        const fechaDate = new Date(fecha + "T00:00:00");
 
         for (let i = 0; i < numCuotas; i++) {
-          const nextFecha = new Date(fechaDate);
+          const nextFecha = new Date(fechaBase);
           nextFecha.setMonth(nextFecha.getMonth() + i);
           filas.push({
             monto: parsedMonto,
@@ -114,7 +119,7 @@ export default function NuevoPage() {
           descripcion,
           categoria_id: categoriaSeleccionada,
           responsable_id: user,
-          fecha,
+          fecha: ymdLocal(fechaBase),
           compartido,
           ambito,
         });
@@ -223,8 +228,33 @@ export default function NuevoPage() {
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
-          className="w-full text-[14px] bg-transparent border-b-2 border-[var(--accent)] focus:outline-none pb-2"
+          className="w-full text-[14px] bg-transparent border-b-2 border-[var(--accent)] focus:outline-none pb-2 mb-3"
         />
+        <div className="text-[12px] text-[var(--ink-soft)] mb-2">¿Este mes o el próximo?</div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMesSelector("actual")}
+            className={`flex-1 px-3 py-2 rounded-lg font-semibold text-[13px] transition-colors ${
+              mesSelector === "actual"
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--accent-bg)] text-[var(--accent)]"
+            }`}
+          >
+            Este mes
+          </button>
+          <button
+            type="button"
+            onClick={() => setMesSelector("proximo")}
+            className={`flex-1 px-3 py-2 rounded-lg font-semibold text-[13px] transition-colors ${
+              mesSelector === "proximo"
+                ? "bg-[var(--accent)] text-white"
+                : "bg-[var(--accent-bg)] text-[var(--accent)]"
+            }`}
+          >
+            Próximo mes
+          </button>
+        </div>
       </Card>
 
       {/* Compartido */}

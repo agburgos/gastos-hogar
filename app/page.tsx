@@ -14,6 +14,14 @@ interface MacroData {
   total_gastado: number;
 }
 
+interface DeudaResumen {
+  id: string;
+  nombre: string;
+  saldo_pendiente: number;
+  pagando: boolean;
+  responsable_id: string;
+}
+
 interface SubAlerta {
   nombre: string;
   macroNombre: string;
@@ -31,6 +39,7 @@ export default function DashboardPage() {
   const [deudasGloria, setDeudasGloria] = useState(0);
   const [deudasAlberto, setDeudasAlberto] = useState(0);
   const [alertasSub, setAlertasSub] = useState<SubAlerta[]>([]);
+  const [deudasResumen, setDeudasResumen] = useState<DeudaResumen[]>([]);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -101,6 +110,16 @@ export default function DashboardPage() {
       const { data: deudas } = await supabase
         .from("deuda_saldos")
         .select("responsable_id, acreedor_id, saldo_pendiente");
+
+      // Traer deudas completas para mostrar resumen con pagando status
+      const { data: deudasDetalle } = await supabase
+        .from("deudas")
+        .select("id, nombre, saldo_pendiente, pagando, responsable_id")
+        .gt("saldo_pendiente", 0)
+        .order("saldo_pendiente", { ascending: false });
+
+      const deudaspagando = deudasDetalle?.filter((d: any) => d.pagando) || [];
+      setDeudasResumen(deudaspagando);
 
       let gloriaDebeNeto = 0;
       let albertoDebeNeto = 0;
@@ -283,19 +302,36 @@ export default function DashboardPage() {
       {/* DEUDAS */}
       {(deudasGloria > 0 || deudasAlberto > 0) && (
         <Card title="Deudas pendientes">
-          <div className="space-y-2 text-[14px]">
-            {deudasGloria > 0 && (
-              <div className="flex justify-between">
-                <span>Gloria debe:</span>
-                <span className="font-bold text-[var(--red)]">{fmt(deudasGloria)}</span>
+          <div className="space-y-3 text-[14px]">
+            <div className="space-y-2">
+              {deudasGloria > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>Gloria debe:</span>
+                  <span className="font-bold text-[var(--red)]">{fmt(deudasGloria)}</span>
+                </div>
+              )}
+              {deudasAlberto > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>Alberto debe:</span>
+                  <span className="font-bold text-[var(--red)]">{fmt(deudasAlberto)}</span>
+                </div>
+              )}
+            </div>
+
+            {deudasResumen.length > 0 && (
+              <div className="pt-2 border-t border-[var(--rule)]">
+                <div className="text-[12px] text-[var(--ink-soft)] mb-1.5 font-medium">Pagos automáticos activos:</div>
+                <div className="space-y-1">
+                  {deudasResumen.map((d) => (
+                    <div key={d.id} className="flex justify-between items-center text-[12px]">
+                      <span className="text-[var(--mid)]">{d.nombre}</span>
+                      <Badge color="green">↻ Pagando</Badge>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {deudasAlberto > 0 && (
-              <div className="flex justify-between">
-                <span>Alberto debe:</span>
-                <span className="font-bold text-[var(--red)]">{fmt(deudasAlberto)}</span>
-              </div>
-            )}
+
             <div className="text-[11px] text-[var(--mid)]">
               <Link href="/deudas" className="underline decoration-[var(--lime)] decoration-2 underline-offset-2">
                 Ver detalles

@@ -147,11 +147,21 @@ export default function DeudasPage() {
       return;
     }
 
+    const mesActual = prompt(
+      `¿Cuándo comienza el pago?\n0: Este mes (julio)\n1: Próximo mes (agosto)`
+    );
+    if (mesActual === null) return;
+
+    const offset = parseInt(mesActual);
+    if (![0, 1].includes(offset)) {
+      alert("Selecciona 0 o 1");
+      return;
+    }
+
     if (!confirm(`Se generarán cuotas mensuales de ${fmt(deuda.cuota_mensual)} como gasto de ${nombrePorId(deuda.responsable_id)}. ¿Confirmar?`)) {
       return;
     }
 
-    // categoría destino para las cuotas: macro "Deudas" → primera subcategoría
     const { data: macroDeudas } = await supabase
       .from("categorias_macro")
       .select("id")
@@ -181,7 +191,7 @@ export default function DeudasPage() {
     const filas = [];
 
     for (let i = 0; i < numCuotas; i++) {
-      const fechaCuota = new Date(hoy.getFullYear(), hoy.getMonth() + 1 + i, 1);
+      const fechaCuota = new Date(hoy.getFullYear(), hoy.getMonth() + offset + i, 1);
       filas.push({
         monto: deuda.cuota_mensual,
         descripcion: `Cuota: ${deuda.nombre}`,

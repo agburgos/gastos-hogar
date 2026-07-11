@@ -1,42 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  /* Paleta pastel clara y sobria */
-  --paper: #F8F7F4;
-  --paper-raised: #FFFFFF;
-  --paper-raised-2: #F9F9F7;
-  --ink: #2C2C2C;
-  --ink-soft: #6B6B6B;
-  --ink-faint: #A8A8A8;
+  color-scheme: light dark;
 
-  /* Acento: rosa pastel suave */
-  --accent: #FF6B9D;
-  --accent-bg: rgba(255, 107, 157, 0.12);
-  --accent-light: #FF8FA3;
+  /* Light mode (6am-6pm) */
+  --paper: #ffffff;
+  --paper-raised: #f5f5f5;
+  --paper-raised-2: #efefef;
+  --ink: #1a1a1a;
+  --ink-soft: #666666;
+  --ink-faint: #999999;
 
-  /* Colores pastel por categoría */
-  --indigo: #A8B5FF;
-  --indigo-bg: rgba(168, 181, 255, 0.14);
-  --coral: #FFB3D9;
-  --coral-bg: rgba(255, 179, 217, 0.14);
-  --gold: #FFD699;
-  --gold-bg: rgba(255, 214, 153, 0.14);
-  --lime: #B3FFD9;
-  --lime-bg: rgba(179, 255, 217, 0.14);
-  --teal: #99D9FF;
-  --teal-bg: rgba(153, 217, 255, 0.14);
+  /* Acento: rojo macOS */
+  --accent: #ff3b30;
+  --accent-bg: rgba(255, 59, 48, 0.15);
+  --accent-light: #ff5c52;
 
-  --green: #66CC99;
-  --green-bg: rgba(102, 204, 153, 0.14);
-  --red: #FF8A80;
-  --red-bg: rgba(255, 138, 128, 0.14);
-  --yellow: #FFD680;
-  --yellow-bg: rgba(255, 214, 128, 0.14);
+  /* Colores macOS saturados por categoría (Light mode) */
+  --indigo: #5856d6;
+  --indigo-bg: rgba(88, 86, 214, 0.15);
+  --coral: #ff9500;
+  --coral-bg: rgba(255, 149, 0, 0.15);
+  --gold: #f5a623;
+  --gold-bg: rgba(245, 166, 35, 0.15);
+  --lime: #34c759;
+  --lime-bg: rgba(52, 199, 89, 0.15);
+  --teal: #00b4d8;
+  --teal-bg: rgba(0, 180, 216, 0.15);
 
-  --rule: rgba(0, 0, 0, 0.06);
-  --rule-strong: rgba(0, 0, 0, 0.12);
+  --green: #34c759;
+  --green-bg: rgba(52, 199, 89, 0.15);
+  --red: #ff3b30;
+  --red-bg: rgba(255, 59, 48, 0.15);
+  --yellow: #ffcc00;
+  --yellow-bg: rgba(255, 204, 0, 0.15);
 
-  --gradient: linear-gradient(135deg, var(--accent) 0%, #FF8FA3 100%);
+  --rule: rgba(0, 0, 0, 0.08);
+  --rule-strong: rgba(0, 0, 0, 0.15);
+
+  --gradient: linear-gradient(135deg, #ff3b30 0%, #ff5c52 100%);
 
   /* legacy aliases */
   --linen: var(--paper);
@@ -47,15 +49,57 @@
   --border: var(--rule);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode (6pm-6am) */
+    --paper: #0a0a0a;
+    --paper-raised: #1a1a1a;
+    --paper-raised-2: #262626;
+    --ink: #f5f5f5;
+    --ink-soft: #b3b3b3;
+    --ink-faint: #808080;
+
+    /* Acento: rojo macOS más brillante en dark */
+    --accent: #ff453a;
+    --accent-bg: rgba(255, 69, 58, 0.2);
+    --accent-light: #ff6b63;
+
+    /* Colores macOS saturados por categoría (Dark mode) */
+    --indigo: #5e5ce6;
+    --indigo-bg: rgba(94, 92, 230, 0.2);
+    --coral: #ff9500;
+    --coral-bg: rgba(255, 149, 0, 0.2);
+    --gold: #ffa500;
+    --gold-bg: rgba(255, 165, 0, 0.2);
+    --lime: #32d74b;
+    --lime-bg: rgba(50, 215, 75, 0.2);
+    --teal: #32ade6;
+    --teal-bg: rgba(50, 173, 230, 0.2);
+
+    --green: #32d74b;
+    --green-bg: rgba(50, 215, 75, 0.2);
+    --red: #ff453a;
+    --red-bg: rgba(255, 69, 58, 0.2);
+    --yellow: #ffdd00;
+    --yellow-bg: rgba(255, 221, 0, 0.2);
+
+    --rule: rgba(255, 255, 255, 0.1);
+    --rule-strong: rgba(255, 255, 255, 0.2);
+
+    --gradient: linear-gradient(135deg, #ff453a 0%, #ff6b63 100%);
+  }
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 h1, h2, h3, .display {
-  font-family: var(--font-body), -apple-system, sans-serif;
-  font-weight: 800;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -67,11 +111,11 @@ textarea {
   border: 1px solid var(--rule);
   border-radius: 12px;
   font-size: 15px;
-  font-family: var(--font-body), sans-serif;
+  font-family: inherit;
   background: var(--paper-raised);
   color: var(--ink);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.3s, color 0.3s;
 }
 input:focus,
 select:focus,
