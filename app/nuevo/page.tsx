@@ -327,16 +327,38 @@ export default function NuevoPage() {
         </Card>
       ) : (
         <Card title="Cuotas">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <label className="text-[14px]">Número de cuotas:</label>
-              <input
-                type="number"
-                min="2"
-                value={numCuotas}
-                onChange={(e) => setNumCuotas(parseInt(e.target.value) || 1)}
-                className="w-16 px-2 py-1 border border-[var(--border)] rounded text-[14px]"
-              />
+          <div className="space-y-3">
+            <div>
+              <label className="text-[14px] font-semibold mb-2 block">Número de cuotas:</label>
+              <div className="flex gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => setNumCuotas(Math.max(2, numCuotas - 1))}
+                  className="px-3 py-2 rounded bg-[var(--accent-bg)] text-[var(--accent)] font-bold"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min="2"
+                  value={numCuotas}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 2) setNumCuotas(val);
+                  }}
+                  className="flex-1 px-3 py-2 border border-[var(--border)] rounded text-[14px] text-center"
+                />
+                <button
+                  type="button"
+                  onClick={() => setNumCuotas(numCuotas + 1)}
+                  className="px-3 py-2 rounded bg-[var(--accent-bg)] text-[var(--accent)] font-bold"
+                >
+                  +
+                </button>
+              </div>
+              <div className="text-[12px] text-[var(--ink-faint)] mt-2">
+                Dividiré ${(parsedMonto / numCuotas).toFixed(0)} por cuota aprox.
+              </div>
             </div>
             <button
               type="button"
