@@ -23,6 +23,7 @@ interface Deuda {
   activa: boolean;
   pagando: boolean;
   cuota_grupo_id: string | null;
+  fecha_activacion_pago: string | null;
 }
 
 function nombrePorId(id: string | null) {
@@ -152,7 +153,7 @@ export default function DeudasPage() {
     }
 
     const mesActual = prompt(
-      `¿Cuándo comienza el pago?\n0: Este mes (julio)\n1: Próximo mes (agosto)`
+      `¿Cuándo comienza el pago?\n0: Este mes\n1: Próximo mes`
     );
     if (mesActual === null) return;
 
@@ -162,63 +163,22 @@ export default function DeudasPage() {
       return;
     }
 
-    if (!confirm(`Se generarán cuotas mensuales de ${fmt(deuda.cuota_mensual)} como gasto de ${nombrePorId(deuda.responsable_id)}. ¿Confirmar?`)) {
+    if (
+      !confirm(
+        `Se descontará ${fmt(deuda.cuota_mensual)}/mes del saldo de "${deuda.nombre}" automáticamente, a partir de ${
+          offset === 0 ? "este mes" : "el próximo mes"
+        }. No se crean gastos por esto — solo se actualiza el saldo de la deuda. ¿Confirmar?`
+      )
+    ) {
       return;
     }
 
-    const { data: macroDeudas } = await supabase
-      .from("categorias_macro")
-      .select("id")
-      .eq("nombre", "Deudas")
-      .single();
-
-    let categoriaId: string | null = null;
-    if (macroDeudas) {
-      const { data: subDeudas } = await supabase
-        .from("categorias")
-        .select("id")
-        .eq("macro_id", macroDeudas.id)
-        .order("orden")
-        .limit(1)
-        .single();
-      categoriaId = subDeudas?.id || null;
-    }
-
-    if (!categoriaId) {
-      alert("No se encontró la categoría 'Deudas'. Revisa el mantenedor de categorías en Ajustes.");
-      return;
-    }
-
-    const numCuotas = Math.min(12, Math.max(1, Math.ceil(deuda.saldo_pendiente / deuda.cuota_mensual)));
     const hoy = new Date();
-    const cuotaGrupoId = crypto.randomUUID();
-    const filas = [];
-
-    for (let i = 0; i < numCuotas; i++) {
-      const fechaCuota = new Date(hoy.getFullYear(), hoy.getMonth() + offset + i, 1);
-      filas.push({
-        monto: deuda.cuota_mensual,
-        descripcion: `Cuota: ${deuda.nombre}`,
-        categoria_id: categoriaId,
-        responsable_id: deuda.responsable_id,
-        fecha: ymdLocal(fechaCuota),
-        compartido: false,
-        ambito: "ninguno",
-        cuota_grupo_id: cuotaGrupoId,
-        cuota_numero: i + 1,
-        cuota_total: numCuotas,
-      });
-    }
-
-    const { error: gastoError } = await supabase.from("gastos").insert(filas);
-    if (gastoError) {
-      alert("Error al generar cuotas: " + gastoError.message);
-      return;
-    }
+    const fechaActivacion = new Date(hoy.getFullYear(), hoy.getMonth() + offset, 1);
 
     const { error } = await supabase
       .from("deudas")
-      .update({ pagando: true, cuota_grupo_id: cuotaGrupoId })
+      .update({ pagando: true, fecha_activacion_pago: ymdLocal(fechaActivacion) })
       .eq("id", deuda.id);
     if (error) {
       alert("Error al activar: " + error.message);

@@ -147,33 +147,31 @@ export default function DashboardPage() {
       setGloria(gloriaGastó);
       setAlberto(albertoGastó);
 
-      // Auto-descuento: para deudas activas con cuota_grupo_id, sumar las cuotas
-      // cuya fecha ya pasó y actualizar monto_pagado (el mes se va "pagando solo")
-      const hoyStr = ymdLocal(new Date());
+      // Auto-descuento: para deudas activas, calcular cuántos meses han pasado
+      // desde que se activó el pago y descontar esa cantidad de cuotas del saldo.
+      // No depende de gastos generados — es puro cálculo de fechas.
       const { data: deudasParaSync } = await supabase
         .from("deuda_saldos")
-        .select("id, monto_total, monto_pagado, cuota_grupo_id, pagando")
+        .select("id, monto_total, monto_pagado, cuota_mensual, fecha_activacion_pago, pagando")
         .eq("pagando", true)
-        .not("cuota_grupo_id", "is", null);
+        .not("cuota_mensual", "is", null)
+        .not("fecha_activacion_pago", "is", null);
 
       if (deudasParaSync && deudasParaSync.length > 0) {
+        const hoy = new Date();
         for (const d of deudasParaSync) {
-          const { data: cuotasPasadas } = await supabase
-            .from("gastos")
-            .select("monto")
-            .eq("cuota_grupo_id", d.cuota_grupo_id)
-            .lte("fecha", hoyStr);
+          const inicio = new Date(d.fecha_activacion_pago + "T00:00:00");
+          const mesesTranscurridos =
+            (hoy.getFullYear() - inicio.getFullYear()) * 12 +
+            (hoy.getMonth() - inicio.getMonth()) +
+            1;
+          const cuotasPasadas = Math.max(0, mesesTranscurridos);
+          const totalCalculado = Math.min(cuotasPasadas * d.cuota_mensual, d.monto_total);
 
-          const totalPagadoCalculado = (cuotasPasadas || []).reduce(
-            (sum: number, g: any) => sum + g.monto,
-            0
-          );
-          const nuevoMontoPagado = Math.min(totalPagadoCalculado, d.monto_total);
-
-          if (nuevoMontoPagado !== d.monto_pagado) {
+          if (totalCalculado !== d.monto_pagado) {
             await supabase
               .from("deudas")
-              .update({ monto_pagado: nuevoMontoPagado })
+              .update({ monto_pagado: totalCalculado })
               .eq("id", d.id);
           }
         }
