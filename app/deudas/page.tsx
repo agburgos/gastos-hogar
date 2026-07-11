@@ -185,6 +185,7 @@ export default function DeudasPage() {
       return;
     }
 
+    setDeudaEditMode(null);
     await cargarDeudas();
   };
 
@@ -219,11 +220,13 @@ export default function DeudasPage() {
     await cargarDeudas();
   };
 
-  const handleTogglePagando = async (deuda: Deuda) => {
-    const nuevoEstado = !deuda.pagando;
+  const handleDesactivarPago = async (deuda: Deuda) => {
+    if (!confirm(`¿Pausar el pago automático de "${deuda.nombre}"? El saldo dejará de descontarse hasta que lo reactives.`)) {
+      return;
+    }
     const { error } = await supabase
       .from("deudas")
-      .update({ pagando: nuevoEstado })
+      .update({ pagando: false })
       .eq("id", deuda.id);
 
     if (error) {
@@ -268,7 +271,9 @@ export default function DeudasPage() {
             {deudaEditMode === deuda.id ? (
               <>
                 <button
-                  onClick={() => handleTogglePagando(deuda)}
+                  onClick={() =>
+                    deuda.pagando ? handleDesactivarPago(deuda) : handleActivarPago(deuda)
+                  }
                   className={`text-[10px] px-2 py-1 rounded font-bold ${
                     deuda.pagando
                       ? "bg-[var(--red-bg)] text-[var(--red)]"

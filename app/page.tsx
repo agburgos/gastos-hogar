@@ -20,6 +20,8 @@ interface DeudaResumen {
   saldo_pendiente: number;
   pagando: boolean;
   responsable_id: string;
+  cuotaEsteMes?: number;
+  cuotasRestantes?: number;
 }
 
 interface SubAlerta {
@@ -162,9 +164,11 @@ export default function DashboardPage() {
         .not("fecha_activacion_pago", "is", null);
 
       const cuotasEsteMesPorDeuda: {
+        id: string;
         responsable_id: string;
         acreedor_id: string | null;
         cuotaEsteMes: number;
+        cuotaMensual: number;
       }[] = [];
 
       if (deudasParaSync && deudasParaSync.length > 0) {
@@ -184,9 +188,11 @@ export default function DashboardPage() {
           const cuotaEsteMes = Math.max(0, totalCalculado - montoPagadoAntes);
 
           cuotasEsteMesPorDeuda.push({
+            id: d.id,
             responsable_id: d.responsable_id,
             acreedor_id: d.acreedor_id,
             cuotaEsteMes,
+            cuotaMensual: d.cuota_mensual,
           });
 
           if (totalCalculado !== d.monto_pagado) {
@@ -205,7 +211,17 @@ export default function DashboardPage() {
         .gt("saldo_pendiente", 0)
         .order("saldo_pendiente", { ascending: false });
 
-      const deudaspagando = deudasDetalle?.filter((d: any) => d.pagando) || [];
+      const cuotasPorId = new Map(cuotasEsteMesPorDeuda.map((d) => [d.id, d]));
+      const deudaspagando = (deudasDetalle?.filter((d: any) => d.pagando) || []).map((d: any) => {
+        const info = cuotasPorId.get(d.id);
+        return {
+          ...d,
+          cuotaEsteMes: info?.cuotaEsteMes,
+          cuotasRestantes: info?.cuotaMensual
+            ? Math.ceil(d.saldo_pendiente / info.cuotaMensual)
+            : undefined,
+        };
+      });
       setDeudasResumen(deudaspagando);
 
       const deudasNoActivas = deudasDetalle?.filter((d: any) => !d.pagando) || [];
@@ -429,11 +445,24 @@ export default function DashboardPage() {
             {deudasResumen.length > 0 && (
               <div className="pt-2 border-t border-[var(--rule)]">
                 <div className="text-[12px] text-[var(--ink-soft)] mb-1.5 font-medium">Pagos automáticos activos:</div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {deudasResumen.map((d) => (
                     <div key={d.id} className="flex justify-between items-center text-[12px]">
-                      <span className="text-[var(--mid)]">{d.nombre}</span>
-                      <Badge color="green">↻ Pagando</Badge>
+                      <div>
+                        <div className="text-[var(--mid)] font-medium">{d.nombre}</div>
+                        {d.cuotasRestantes !== undefined && (
+                          <div className="text-[10px] text-[var(--ink-faint)]">
+                            {d.cuotasRestantes} cuota{d.cuotasRestantes !== 1 ? "s" : ""} restante
+                            {d.cuotasRestantes !== 1 ? "s" : ""}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        {d.cuotaEsteMes !== undefined && (
+                          <div className="font-bold">{fmt(d.cuotaEsteMes)}</div>
+                        )}
+                        <Badge color="green">↻</Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
