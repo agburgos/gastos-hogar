@@ -105,12 +105,15 @@ export default function NuevoPage() {
 
       if (cuotas && numCuotas > 1) {
         const cuotaGrupoId = crypto.randomUUID();
+        const montoPorCuota = Math.floor(parsedMonto / numCuotas);
+        const restoMonto = parsedMonto - (montoPorCuota * (numCuotas - 1));
 
         for (let i = 0; i < numCuotas; i++) {
           const nextFecha = new Date(fechaBase);
           nextFecha.setMonth(nextFecha.getMonth() + i);
+          const montoFinal = i === numCuotas - 1 ? restoMonto : montoPorCuota;
           filas.push({
-            monto: parsedMonto,
+            monto: montoFinal,
             descripcion,
             categoria_id: categoriaSeleccionada,
             responsable_id: responsableSeleccionado,
