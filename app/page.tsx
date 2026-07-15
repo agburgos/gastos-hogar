@@ -184,8 +184,11 @@ export default function DashboardPage() {
             Math.max(0, cuotasPasadas - 1) * d.cuota_mensual,
             d.monto_total
           );
-          const totalCalculado = Math.min(cuotasPasadas * d.cuota_mensual, d.monto_total);
-          const cuotaEsteMes = Math.max(0, totalCalculado - montoPagadoAntes);
+          const calculadoPorFechas = Math.min(cuotasPasadas * d.cuota_mensual, d.monto_total);
+          // Los abonos manuales pueden superar el calendario de cuotas:
+          // el auto-descuento solo puede AUMENTAR el pagado, nunca reducirlo.
+          const totalCalculado = Math.max(calculadoPorFechas, d.monto_pagado);
+          const cuotaEsteMes = Math.max(0, calculadoPorFechas - montoPagadoAntes);
 
           cuotasEsteMesPorDeuda.push({
             id: d.id,
