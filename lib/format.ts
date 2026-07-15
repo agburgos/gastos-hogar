@@ -2,6 +2,11 @@ export function fmt(n: number): string {
   return '$' + Math.round(n).toLocaleString('es-CL');
 }
 
+// Un abono descuenta: su monto cuenta como negativo en todos los cálculos.
+export function montoReal(monto: number, esAbono?: boolean): number {
+  return esAbono ? -monto : monto;
+}
+
 export function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
 }

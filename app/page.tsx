@@ -129,7 +129,7 @@ export default function DashboardPage() {
       // Traer gastos compartidos por persona para este mes
       const { data: allGastos } = await supabase
         .from("gastos")
-        .select("responsable_id, monto, compartido")
+        .select("responsable_id, monto, compartido, es_abono")
         .gte("fecha", mesInicioStr)
         .lt("fecha", mesFinStr);
 
@@ -138,10 +138,11 @@ export default function DashboardPage() {
 
       allGastos?.forEach((g: any) => {
         if (g.compartido) {
+          const monto = g.es_abono ? -g.monto : g.monto;
           if (g.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
-            gloriaGastó += g.monto;
+            gloriaGastó += monto;
           } else if (g.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
-            albertoGastó += g.monto;
+            albertoGastó += monto;
           }
         }
       });
@@ -268,13 +269,14 @@ export default function DashboardPage() {
       if (subs && subs.length > 0) {
         const { data: gastosPorSub } = await supabase
           .from("gastos")
-          .select("categoria_id, monto")
+          .select("categoria_id, monto, es_abono")
           .gte("fecha", mesInicioStr)
           .lt("fecha", mesFinStr);
 
         const sumaPorSub = new Map<string, number>();
         gastosPorSub?.forEach((g: any) => {
-          sumaPorSub.set(g.categoria_id, (sumaPorSub.get(g.categoria_id) || 0) + g.monto);
+          const monto = g.es_abono ? -g.monto : g.monto;
+          sumaPorSub.set(g.categoria_id, (sumaPorSub.get(g.categoria_id) || 0) + monto);
         });
 
         const ingresoActual = ingresoData?.monto || 0;

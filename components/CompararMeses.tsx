@@ -77,7 +77,7 @@ export default function CompararMeses() {
 
       let query = supabase
         .from("gastos")
-        .select("monto, fecha, ambito, categoria_id, categorias ( macro_id )")
+        .select("monto, es_abono, fecha, ambito, categoria_id, categorias ( macro_id )")
         .gte("fecha", inicio.toISOString().slice(0, 10))
         .lt("fecha", fin.toISOString().slice(0, 10));
 
@@ -97,7 +97,7 @@ export default function CompararMeses() {
         const f = new Date(g.fecha + "T00:00:00");
         const key = `${f.getFullYear()}-${f.getMonth()}`;
         if (porMes.has(key)) {
-          porMes.set(key, (porMes.get(key) || 0) + g.monto);
+          porMes.set(key, (porMes.get(key) || 0) + (g.es_abono ? -g.monto : g.monto));
         }
       });
 

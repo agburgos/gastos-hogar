@@ -41,6 +41,7 @@ export default function NuevoPage() {
   const [cuotas, setCuotas] = useState(false);
   const [numCuotas, setNumCuotas] = useState(1);
   const [recurrente, setRecurrente] = useState(false);
+  const [esAbono, setEsAbono] = useState(false);
   const [macros, setMacros] = useState<Macro[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [user, setUser] = useState<string | null>(null);
@@ -135,6 +136,7 @@ export default function NuevoPage() {
           compartido,
           ambito,
           recurrente,
+          es_abono: esAbono,
         });
       }
 
@@ -291,6 +293,24 @@ export default function NuevoPage() {
             />
             <span className="text-[14px]">{recurrente ? "Gasto recurrente (cada mes)" : "Gasto único"}</span>
           </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={esAbono}
+              onChange={(e) => {
+                setEsAbono(e.target.checked);
+                if (e.target.checked) {
+                  setCuotas(false);
+                  setNumCuotas(1);
+                  setRecurrente(false);
+                }
+              }}
+              className="w-5 h-5"
+            />
+            <span className={`text-[14px] ${esAbono ? "text-[var(--green)] font-semibold" : ""}`}>
+              {esAbono ? "Abono — descuenta del mes ✓" : "Es un abono (descuenta)"}
+            </span>
+          </label>
         </div>
       </Card>
 
@@ -314,8 +334,8 @@ export default function NuevoPage() {
         </div>
       </Card>
 
-      {/* Cuotas */}
-      {!cuotas ? (
+      {/* Cuotas (no aplican a abonos) */}
+      {esAbono ? null : !cuotas ? (
         <Card>
           <button
             type="button"
@@ -413,7 +433,11 @@ export default function NuevoPage() {
         <Card accent>
           <div className="text-[14px] space-y-1">
             <div>
-              <strong>{fmt(parseFloat(monto) || 0)}</strong> — {categorias.find((c) => c.id === categoriaSeleccionada)?.nombre}
+              <strong className={esAbono ? "text-[var(--green)]" : ""}>
+                {esAbono ? "−" : ""}{fmt(parseFloat(monto) || 0)}
+              </strong>{" "}
+              — {categorias.find((c) => c.id === categoriaSeleccionada)?.nombre}
+              {esAbono && <span className="text-[var(--green)] font-semibold"> (abono)</span>}
             </div>
             <div className="text-[12px] text-[var(--mid)]">{fecha}</div>
             {cuotas && numCuotas > 1 && <div className="text-[12px] text-[var(--mid)]">En {numCuotas} cuotas</div>}

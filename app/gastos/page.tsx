@@ -12,6 +12,7 @@ interface Gasto {
   fecha: string;
   compartido: boolean;
   recurrente: boolean;
+  es_abono: boolean;
   ambito: string;
   categoria_id: string;
   categoria_nombre: string;
@@ -87,7 +88,7 @@ export default function GastosPage() {
       .from("gastos")
       .select(
         `
-        id, monto, descripcion, fecha, compartido, recurrente, ambito, categoria_id,
+        id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id,
         categorias ( nombre, categorias_macro ( nombre ) ),
         usuarios ( nombre )
       `
@@ -103,6 +104,7 @@ export default function GastosPage() {
       fecha: g.fecha,
       compartido: g.compartido,
       recurrente: g.recurrente || false,
+      es_abono: g.es_abono || false,
       ambito: g.ambito || "ninguno",
       categoria_id: g.categoria_id,
       categoria_nombre: g.categorias?.nombre || "Sin categoría",
@@ -212,7 +214,7 @@ export default function GastosPage() {
     await cargar();
   };
 
-  const total = gastos.reduce((sum, g) => sum + g.monto, 0);
+  const total = gastos.reduce((sum, g) => sum + (g.es_abono ? -g.monto : g.monto), 0);
 
   if (loading) {
     return (
@@ -284,6 +286,7 @@ export default function GastosPage() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-[14px] font-semibold truncate">{g.descripcion || "Sin título"}</span>
                     {g.recurrente && <Badge color="gold">↻</Badge>}
+                    {g.es_abono && <Badge color="green">Abono</Badge>}
                   </div>
                   <div className="text-[12px] text-[var(--ink-soft)] mt-0.5">
                     {g.macro_nombre} › {g.categoria_nombre} · {g.responsable_nombre}
@@ -295,7 +298,9 @@ export default function GastosPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <span className="text-[15px] font-bold">{fmt(g.monto)}</span>
+                  <span className={`text-[15px] font-bold ${g.es_abono ? "text-[var(--green)]" : ""}`}>
+                    {g.es_abono ? "−" : ""}{fmt(g.monto)}
+                  </span>
                   <div className="flex gap-1">
                     {!g.recurrente && (
                       <button

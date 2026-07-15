@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 interface GastoRaw {
   id: string;
   monto: number;
+  es_abono: boolean;
   descripcion: string | null;
   fecha: string;
   macro: string;
@@ -71,7 +72,7 @@ export default function DetallePage() {
       .from("gastos")
       .select(
         `
-        id, monto, descripcion, fecha, categoria_id, ambito,
+        id, monto, es_abono, descripcion, fecha, categoria_id, ambito,
         categorias ( nombre, categorias_macro ( nombre ) ),
         usuarios ( nombre )
       `
@@ -83,6 +84,7 @@ export default function DetallePage() {
     const parsed: GastoRaw[] = (data || []).map((g: any) => ({
       id: g.id,
       monto: g.monto,
+      es_abono: g.es_abono || false,
       descripcion: g.descripcion,
       fecha: g.fecha,
       macro: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
@@ -108,6 +110,7 @@ export default function DetallePage() {
 
     for (const g of gastosRaw) {
       const dia = parseInt(g.fecha.slice(8, 10));
+      const montoG = g.es_abono ? -g.monto : g.monto;
 
       if (!arbol.has(g.macro)) {
         arbol.set(g.macro, { nombre: g.macro, categorias: new Map(), porDia: new Map(), total: 0 });
@@ -133,17 +136,17 @@ export default function DetallePage() {
       }
       const respNode = catNode.responsables.get(g.responsable)!;
 
-      respNode.porDia.set(dia, (respNode.porDia.get(dia) || 0) + g.monto);
-      respNode.total += g.monto;
+      respNode.porDia.set(dia, (respNode.porDia.get(dia) || 0) + montoG);
+      respNode.total += montoG;
 
-      catNode.porDia.set(dia, (catNode.porDia.get(dia) || 0) + g.monto);
-      catNode.total += g.monto;
+      catNode.porDia.set(dia, (catNode.porDia.get(dia) || 0) + montoG);
+      catNode.total += montoG;
 
-      macroNode.porDia.set(dia, (macroNode.porDia.get(dia) || 0) + g.monto);
-      macroNode.total += g.monto;
+      macroNode.porDia.set(dia, (macroNode.porDia.get(dia) || 0) + montoG);
+      macroNode.total += montoG;
 
-      totalPorDia.set(dia, (totalPorDia.get(dia) || 0) + g.monto);
-      totalGeneral += g.monto;
+      totalPorDia.set(dia, (totalPorDia.get(dia) || 0) + montoG);
+      totalGeneral += montoG;
     }
 
     const diasConGasto = Array.from(totalPorDia.keys()).sort((a, b) => a - b);
@@ -184,7 +187,8 @@ export default function DetallePage() {
   const totalesPorResponsable = useMemo(() => {
     const totales = new Map<string, number>();
     gastosRaw.forEach((g) => {
-      totales.set(g.responsable, (totales.get(g.responsable) || 0) + g.monto);
+      const montoG = g.es_abono ? -g.monto : g.monto;
+      totales.set(g.responsable, (totales.get(g.responsable) || 0) + montoG);
     });
     return totales;
   }, [gastosRaw]);
@@ -481,27 +485,35 @@ export default function DetallePage() {
                                       className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
                                     >
                                       <td
-                                        className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
+                                        className={`px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] truncate ${
+                                          gasto.es_abono ? "text-[var(--green)]" : "text-[var(--mid)]"
+                                        }`}
                                         style={{ minWidth: 150, maxWidth: 150 }}
                                       >
-                                        {gasto.descripcion || "Sin descripción"}
+                                        {gasto.es_abono ? "↓ " : ""}{gasto.descripcion || "Sin descripción"}
                                       </td>
                                       <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
                                         {gasto.responsable}
                                       </td>
-                                      <td className="text-right px-3 py-1 text-[11px] font-semibold">
-                                        {fmt(gasto.monto)}
+                                      <td
+                                        className={`text-right px-3 py-1 text-[11px] font-semibold ${
+                                          gasto.es_abono ? "text-[var(--green)]" : ""
+                                        }`}
+                                      >
+                                        {gasto.es_abono ? "−" : ""}{fmt(gasto.monto)}
                                       </td>
                                       {diasDelMes.map((dia) => (
                                         <td
                                           key={dia}
                                           className={`text-right px-2 py-1 text-[11px] text-[var(--mid)] ${
                                             dia === gasto_dia
-                                              ? "font-bold text-[var(--accent)]"
+                                              ? gasto.es_abono
+                                                ? "font-bold text-[var(--green)]"
+                                                : "font-bold text-[var(--accent)]"
                                               : ""
                                           }`}
                                         >
-                                          {dia === gasto_dia ? fmt(gasto.monto) : ""}
+                                          {dia === gasto_dia ? `${gasto.es_abono ? "−" : ""}${fmt(gasto.monto)}` : ""}
                                         </td>
                                       ))}
                                     </tr>
