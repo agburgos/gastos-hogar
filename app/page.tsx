@@ -38,6 +38,8 @@ export default function DashboardPage() {
   const [ingreso, setIngreso] = useState<number>(0);
   const [gloria, setGloria] = useState(0);
   const [alberto, setAlberto] = useState(0);
+  const [abonosGloria, setAbonosGloria] = useState(0);
+  const [abonosAlberto, setAbonosAlberto] = useState(0);
   const [deudasGloria, setDeudasGloria] = useState(0);
   const [deudasAlberto, setDeudasAlberto] = useState(0);
   const [alertasSub, setAlertasSub] = useState<SubAlerta[]>([]);
@@ -135,17 +137,26 @@ export default function DashboardPage() {
 
       let gloriaGastó = 0;
       let albertoGastó = 0;
+      let abonóGloria = 0;
+      let abonóAlberto = 0;
 
       allGastos?.forEach((g: any) => {
-        if (g.compartido) {
-          const monto = g.es_abono ? -g.monto : g.monto;
-          if (g.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0") {
-            gloriaGastó += monto;
-          } else if (g.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03") {
-            albertoGastó += monto;
-          }
+        if (!g.compartido) return;
+        const esGloria = g.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0";
+        const esAlberto = g.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03";
+        if (g.es_abono) {
+          // Un abono es plata que la persona entrega para saldar el mes:
+          // no es gasto, descuenta directo de lo que esa persona debe.
+          if (esGloria) abonóGloria += g.monto;
+          else if (esAlberto) abonóAlberto += g.monto;
+        } else {
+          if (esGloria) gloriaGastó += g.monto;
+          else if (esAlberto) albertoGastó += g.monto;
         }
       });
+
+      setAbonosGloria(abonóGloria);
+      setAbonosAlberto(abonóAlberto);
 
       setGloria(gloriaGastó);
       setAlberto(albertoGastó);
@@ -331,8 +342,10 @@ export default function DashboardPage() {
 
   const totalGasto = gloria + alberto;
   const mitad = totalGasto / 2;
-  const saldoGloria = gloria - mitad - deudasGloria; // Positivo = le deben
-  const saldoAlberto = alberto - mitad - deudasAlberto;
+  // Los abonos son transferencias para saldar el mes: suman a favor de quien
+  // los hizo y descuentan lo que la otra persona tiene por cobrar.
+  const saldoGloria = gloria - mitad - deudasGloria + abonosGloria - abonosAlberto; // Positivo = le deben
+  const saldoAlberto = alberto - mitad - deudasAlberto + abonosAlberto - abonosGloria;
 
   let resumenPago = "";
   let montoAPagar = 0;
@@ -380,6 +393,14 @@ export default function DashboardPage() {
         <div className="text-[13px] font-medium text-[var(--ink-soft)] mt-2">
           Gloria {fmt(gloria)} · Alberto {fmt(alberto)}
         </div>
+        {(abonosGloria > 0 || abonosAlberto > 0) && (
+          <div className="text-[13px] font-semibold mt-1" style={{ color: "var(--green)" }}>
+            ↓ Abonos:
+            {abonosGloria > 0 && <> Gloria {fmt(abonosGloria)}</>}
+            {abonosGloria > 0 && abonosAlberto > 0 && " ·"}
+            {abonosAlberto > 0 && <> Alberto {fmt(abonosAlberto)}</>}
+          </div>
+        )}
       </div>
 
       {/* Balance */}
@@ -396,6 +417,11 @@ export default function DashboardPage() {
             <div className="text-[20px] font-extrabold" style={{ color: "var(--accent)" }}>
               {fmt(montoAPagar)}
             </div>
+            {(abonosGloria > 0 || abonosAlberto > 0) && (
+              <div className="text-[11px] font-medium" style={{ color: "var(--green)" }}>
+                ya descontados los abonos del mes
+              </div>
+            )}
           </div>
         </div>
       ) : (
