@@ -189,7 +189,13 @@ export default function DashboardPage() {
           // Los abonos manuales pueden superar el calendario de cuotas:
           // el auto-descuento solo puede AUMENTAR el pagado, nunca reducirlo.
           const totalCalculado = Math.max(calculadoPorFechas, d.monto_pagado);
-          const cuotaEsteMes = Math.max(0, calculadoPorFechas - montoPagadoAntes);
+          // Lo abonado por sobre el calendario descuenta la cuota de este mes:
+          // si la deuda ya se pagó por adelantado, este mes no se debe nada.
+          const abonadoExtra = Math.max(0, d.monto_pagado - calculadoPorFechas);
+          const cuotaEsteMes = Math.max(
+            0,
+            calculadoPorFechas - montoPagadoAntes - abonadoExtra
+          );
 
           cuotasEsteMesPorDeuda.push({
             id: d.id,
