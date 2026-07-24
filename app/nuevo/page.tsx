@@ -308,7 +308,7 @@ export default function NuevoPage() {
               className="w-5 h-5"
             />
             <span className={`text-[14px] ${esAbono ? "text-[var(--green)] font-semibold" : ""}`}>
-              {esAbono ? "Abono — descuenta del mes ✓" : "Es un abono (descuenta)"}
+              {esAbono ? "Abono — descuenta de lo que debe ✓" : "Es un abono (plata que entrega)"}
             </span>
           </label>
         </div>

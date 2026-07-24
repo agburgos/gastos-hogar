@@ -87,6 +87,8 @@ export default function CompararMeses() {
       meses.forEach((m) => porMes.set(`${m.año}-${m.mes}`, 0));
 
       (data || []).forEach((g: any) => {
+        // los abonos no son gasto: es plata entregada a la otra persona
+        if (g.es_abono) return;
         // filtro ámbito: "ambos" siempre cuenta para casa y parcela
         if (ambitoSel !== "todos" && g.ambito !== ambitoSel && g.ambito !== "ambos") return;
         // filtro macro
@@ -97,7 +99,7 @@ export default function CompararMeses() {
         const f = new Date(g.fecha + "T00:00:00");
         const key = `${f.getFullYear()}-${f.getMonth()}`;
         if (porMes.has(key)) {
-          porMes.set(key, (porMes.get(key) || 0) + (g.es_abono ? -g.monto : g.monto));
+          porMes.set(key, (porMes.get(key) || 0) + g.monto);
         }
       });
 

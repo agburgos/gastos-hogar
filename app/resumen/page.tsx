@@ -19,16 +19,17 @@ export default function ResumenPage() {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const mesInicio = `${mesSeleccionado}-01`;
-      const mesProximo = new Date(parseInt(mesSeleccionado.slice(0, 4)), parseInt(mesSeleccionado.slice(5, 7)), 1);
-      mesProximo.setMonth(mesProximo.getMonth() + 1);
-      const mesFinStr = ymdLocal(mesProximo).slice(0, 7);
+      // Ojo: el mes del selector viene 1-based ("2026-07"); el constructor de Date
+      // espera 0-based, así que hay que restar 1 o la ventana se corre un mes.
+      const [añoSel, mesSel] = mesSeleccionado.split("-").map(Number);
+      const mesInicio = ymdLocal(new Date(añoSel, mesSel - 1, 1));
+      const mesFin = ymdLocal(new Date(añoSel, mesSel, 1));
 
       const { data } = await supabase
         .from("gasto_macro_mensual")
         .select("macro, mes, total_gastado")
         .gte("mes", mesInicio)
-        .lt("mes", `${mesFinStr}-01`)
+        .lt("mes", mesFin)
         .order("macro");
 
       setDatos(data || []);
@@ -38,9 +39,16 @@ export default function ResumenPage() {
     fetch();
   }, [mesSeleccionado]);
 
-  const agrupadoPorMacro = Array.from(
-    new Map(datos.map((d) => [d.macro, d.total_gastado])).entries()
-  ).map(([macro, total]) => ({ macro, total }));
+  // Sumar por macro: si la vista devuelve más de una fila con el mismo nombre
+  // (varios meses, o dos macros homónimas) no se puede sobrescribir, hay que acumular.
+  const totalesPorMacro = new Map<string, number>();
+  datos.forEach((d) => {
+    totalesPorMacro.set(d.macro, (totalesPorMacro.get(d.macro) || 0) + d.total_gastado);
+  });
+  const agrupadoPorMacro = Array.from(totalesPorMacro.entries()).map(([macro, total]) => ({
+    macro,
+    total,
+  }));
 
   const total = agrupadoPorMacro.reduce((sum, d) => sum + d.total, 0);
 

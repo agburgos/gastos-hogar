@@ -214,7 +214,8 @@ export default function GastosPage() {
     await cargar();
   };
 
-  const total = gastos.reduce((sum, g) => sum + (g.es_abono ? -g.monto : g.monto), 0);
+  // Los abonos no son gasto (es plata entregada a la otra persona), no suman al total.
+  const total = gastos.reduce((sum, g) => sum + (g.es_abono ? 0 : g.monto), 0);
 
   if (loading) {
     return (
@@ -299,7 +300,7 @@ export default function GastosPage() {
                 </div>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className={`text-[15px] font-bold ${g.es_abono ? "text-[var(--green)]" : ""}`}>
-                    {g.es_abono ? "−" : ""}{fmt(g.monto)}
+                    {fmt(g.monto)}
                   </span>
                   <div className="flex gap-1">
                     {!g.recurrente && (

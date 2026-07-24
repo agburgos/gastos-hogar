@@ -292,8 +292,9 @@ export default function DashboardPage() {
 
         const sumaPorSub = new Map<string, number>();
         gastosPorSub?.forEach((g: any) => {
-          const monto = g.es_abono ? -g.monto : g.monto;
-          sumaPorSub.set(g.categoria_id, (sumaPorSub.get(g.categoria_id) || 0) + monto);
+          // un abono no reduce el gasto de la categoría, sólo el saldo entre ambos
+          if (g.es_abono) return;
+          sumaPorSub.set(g.categoria_id, (sumaPorSub.get(g.categoria_id) || 0) + g.monto);
         });
 
         const ingresoActual = ingresoData?.monto || 0;
