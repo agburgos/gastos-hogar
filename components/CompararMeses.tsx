@@ -231,8 +231,12 @@ export default function CompararMeses() {
             <div
               className="fixed z-50 w-[220px] bg-[var(--paper)] border border-[var(--border)] rounded-xl p-2.5 shadow-lg pointer-events-none"
               style={{
-                left: Math.min(tipPos.x + 14, (typeof window !== "undefined" ? window.innerWidth : 400) - 232),
-                top: tipPos.y + 14,
+                left: Math.max(
+                  8,
+                  Math.min(tipPos.x - 110, (typeof window !== "undefined" ? window.innerWidth : 400) - 228)
+                ),
+                top: tipPos.y - 14,
+                transform: "translateY(-100%)",
               }}
             >
               <div className="flex justify-between items-baseline mb-1.5">
@@ -260,14 +264,14 @@ export default function CompararMeses() {
             </div>
           )}
 
-          {/* Barras apiladas */}
-          <div className="flex items-end gap-1.5 sm:gap-2.5 h-[180px]">
+          {/* Barras apiladas. Cada columna: total (fila alineada) · barra · mes */}
+          <div className="flex gap-1.5 sm:gap-2.5">
             {meses.map((m) => {
               const hTotal = max > 0 ? Math.max((m.total / max) * 100, m.total > 0 ? 3 : 0) : 0;
               return (
                 <div
                   key={m.key}
-                  className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer"
+                  className="flex-1 flex flex-col items-center cursor-pointer"
                   onMouseEnter={(e) => {
                     setMesHover(m.key);
                     setTipPos({ x: e.clientX, y: e.clientY });
@@ -279,34 +283,38 @@ export default function CompararMeses() {
                     setMesHover((prev) => (prev === m.key ? null : m.key));
                   }}
                 >
-                  <div className="text-[9px] font-semibold text-[var(--ink-soft)] mb-1 whitespace-nowrap">
+                  {/* fila de totales, todos a la misma altura */}
+                  <div className="h-[14px] text-[9px] font-semibold text-[var(--ink-soft)] whitespace-nowrap leading-none">
                     {m.total > 0 ? fmt(m.total).replace("$", "") : ""}
                   </div>
-                  {/* columna apilada */}
-                  <div
-                    className={`w-full rounded-t-md overflow-hidden flex flex-col-reverse transition-all duration-300 ${
-                      m.esActual ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--paper-raised)]" : ""
-                    } ${m.esFuturo ? "opacity-60" : ""}`}
-                    style={{ height: `${hTotal}%`, minHeight: m.total > 0 ? 3 : 0 }}
-                  >
-                    {series.map((s) => {
-                      const v = m.porSerie.get(s.id) || 0;
-                      if (v <= 0) return null;
-                      const segH = m.total > 0 ? (v / m.total) * 100 : 0;
-                      return (
-                        <div
-                          key={s.id}
-                          style={{
-                            height: `${segH}%`,
-                            background: s.color,
-                            backgroundImage: m.esFuturo
-                              ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 6px)"
-                              : undefined,
-                          }}
-                        />
-                      );
-                    })}
+                  {/* área de barra: crecen desde una base común */}
+                  <div className="w-full h-[170px] flex flex-col justify-end">
+                    <div
+                      className={`w-full rounded-t-md overflow-hidden flex flex-col-reverse transition-all duration-300 ${
+                        m.esActual ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--paper-raised)]" : ""
+                      } ${m.esFuturo ? "opacity-60" : ""}`}
+                      style={{ height: `${hTotal}%`, minHeight: m.total > 0 ? 3 : 0 }}
+                    >
+                      {series.map((s) => {
+                        const v = m.porSerie.get(s.id) || 0;
+                        if (v <= 0) return null;
+                        const segH = m.total > 0 ? (v / m.total) * 100 : 0;
+                        return (
+                          <div
+                            key={s.id}
+                            style={{
+                              height: `${segH}%`,
+                              background: s.color,
+                              backgroundImage: m.esFuturo
+                                ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.25) 0 3px, transparent 3px 6px)"
+                                : undefined,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
+                  {/* mes, todos a la misma altura */}
                   <div
                     className={`text-[9px] font-semibold uppercase mt-1.5 whitespace-nowrap ${
                       m.esActual ? "text-[var(--accent)]" : m.esFuturo ? "text-[var(--ink-faint)]" : "text-[var(--ink-soft)]"
