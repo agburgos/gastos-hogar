@@ -526,7 +526,6 @@ export default function DetallePage() {
                                       <td
                                         className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
                                         style={{ minWidth: 150, maxWidth: 150 }}
-                                        title={gasto.descripcion || "Sin descripción"}
                                       >
                                         {gasto.descripcion || "Sin descripción"}
                                         {gasto.cuota_total && gasto.cuota_total > 1 && (
@@ -611,14 +610,24 @@ export default function DetallePage() {
           Se renderiza por portal a document.body porque el div raíz tiene un transform
           (-translate-x-1/2) que rompería el position:fixed del tooltip. */}
       {cuotaTip &&
-        typeof document !== "undefined" &&
+        typeof window !== "undefined" &&
         createPortal(
-          <div
-            className="fixed z-[100] px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
-            style={{ left: cuotaTip.x + 12, top: cuotaTip.y + 12 }}
-          >
-            {cuotaTip.text}
-          </div>,
+          (() => {
+            const anchoAprox = 120;
+            const abajo = cuotaTip.y > window.innerHeight - 60; // cerca del borde inferior
+            const left = Math.max(8, Math.min(cuotaTip.x + 12, window.innerWidth - anchoAprox));
+            const style: React.CSSProperties = abajo
+              ? { left, top: cuotaTip.y - 12, transform: "translateY(-100%)" }
+              : { left, top: cuotaTip.y + 16 };
+            return (
+              <div
+                className="fixed z-[100] px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
+                style={style}
+              >
+                {cuotaTip.text}
+              </div>
+            );
+          })(),
           document.body
         )}
     </div>
