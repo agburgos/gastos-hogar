@@ -133,7 +133,7 @@ export default function NuevoPage() {
           categoria_id: categoriaSeleccionada,
           responsable_id: responsableSeleccionado,
           fecha: ymdLocal(fechaBase),
-          compartido,
+          compartido: esAbono ? true : compartido, // un abono siempre es compartido
           ambito,
           recurrente,
           es_abono: esAbono,
@@ -275,14 +275,21 @@ export default function NuevoPage() {
       {/* Compartido */}
       <Card title="Gasto">
         <div className="space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label className={`flex items-center gap-3 ${esAbono ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
             <input
               type="checkbox"
               checked={compartido}
+              disabled={esAbono}
               onChange={(e) => setCompartido(e.target.checked)}
               className="w-5 h-5"
             />
-            <span className="text-[14px]">{compartido ? "Compartido entre ambos" : "Gasto personal"}</span>
+            <span className="text-[14px]">
+              {esAbono
+                ? "Compartido (obligatorio en abonos)"
+                : compartido
+                ? "Compartido entre ambos"
+                : "Gasto personal"}
+            </span>
           </label>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
@@ -303,6 +310,7 @@ export default function NuevoPage() {
                   setCuotas(false);
                   setNumCuotas(1);
                   setRecurrente(false);
+                  setCompartido(true); // un abono siempre es transferencia entre ambos
                 }
               }}
               className="w-5 h-5"
