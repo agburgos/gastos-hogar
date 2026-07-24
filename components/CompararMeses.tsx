@@ -54,6 +54,7 @@ export default function CompararMeses() {
   const [series, setSeries] = useState<Serie[]>([]);
   const [loading, setLoading] = useState(true);
   const [mesHover, setMesHover] = useState<string | null>(null);
+  const [tipPos, setTipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   useEffect(() => {
     const initCategorias = async () => {
@@ -225,22 +226,28 @@ export default function CompararMeses() {
         <div className="text-[13px] text-[var(--ink-soft)] py-6">Cargando...</div>
       ) : (
         <div className="bg-[var(--paper-raised)] rounded-2xl p-4 relative">
-          {/* Tooltip de detalle del mes (como la foto) */}
+          {/* Tooltip compacto que sigue el cursor (como la foto, pero chico) */}
           {colHover && colHover.total > 0 && (
-            <div className="absolute z-20 left-4 right-4 top-3 bg-[var(--paper)] border border-[var(--border)] rounded-xl p-3 shadow-lg pointer-events-none">
-              <div className="flex justify-between items-baseline mb-2">
-                <span className="text-[13px] font-bold capitalize">{colHover.label}</span>
-                <span className="text-[13px] font-bold">{fmt(colHover.total)}</span>
+            <div
+              className="fixed z-50 w-[220px] bg-[var(--paper)] border border-[var(--border)] rounded-xl p-2.5 shadow-lg pointer-events-none"
+              style={{
+                left: Math.min(tipPos.x + 14, (typeof window !== "undefined" ? window.innerWidth : 400) - 232),
+                top: tipPos.y + 14,
+              }}
+            >
+              <div className="flex justify-between items-baseline mb-1.5">
+                <span className="text-[12px] font-bold capitalize">{colHover.label}</span>
+                <span className="text-[12px] font-bold">{fmt(colHover.total)}</span>
               </div>
-              <div className="space-y-1 max-h-[180px] overflow-y-auto">
+              <div className="space-y-0.5 max-h-[160px] overflow-y-auto">
                 {series
                   .map((s) => ({ s, v: colHover.porSerie.get(s.id) || 0 }))
                   .filter((x) => x.v > 0)
                   .sort((a, b) => b.v - a.v)
                   .map(({ s, v }) => (
-                    <div key={s.id} className="flex items-center justify-between gap-3 text-[12px]">
+                    <div key={s.id} className="flex items-center justify-between gap-2 text-[11px]">
                       <span className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.color }} />
                         <span className="truncate">{s.nombre}</span>
                       </span>
                       <span className="font-semibold shrink-0">{fmt(v)}</span>
@@ -248,7 +255,7 @@ export default function CompararMeses() {
                   ))}
               </div>
               {colHover.esFuturo && (
-                <div className="text-[11px] text-[var(--ink-soft)] mt-2">Proyección por cuotas comprometidas</div>
+                <div className="text-[10px] text-[var(--ink-soft)] mt-1.5">Proyección por cuotas</div>
               )}
             </div>
           )}
@@ -261,9 +268,16 @@ export default function CompararMeses() {
                 <div
                   key={m.key}
                   className="flex-1 flex flex-col items-center justify-end h-full cursor-pointer"
-                  onMouseEnter={() => setMesHover(m.key)}
+                  onMouseEnter={(e) => {
+                    setMesHover(m.key);
+                    setTipPos({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseMove={(e) => setTipPos({ x: e.clientX, y: e.clientY })}
                   onMouseLeave={() => setMesHover(null)}
-                  onClick={() => setMesHover((prev) => (prev === m.key ? null : m.key))}
+                  onClick={(e) => {
+                    setTipPos({ x: e.clientX, y: e.clientY });
+                    setMesHover((prev) => (prev === m.key ? null : m.key));
+                  }}
                 >
                   <div className="text-[9px] font-semibold text-[var(--ink-soft)] mb-1 whitespace-nowrap">
                     {m.total > 0 ? fmt(m.total).replace("$", "") : ""}
@@ -318,8 +332,16 @@ export default function CompararMeses() {
           )}
 
           {meses.some((m) => m.esFuturo) && (
-            <div className="text-[10px] text-[var(--ink-faint)] mt-2">
-              ▨ Meses futuros = proyección por cuotas ya comprometidas
+            <div className="flex items-center gap-1.5 text-[10px] text-[var(--ink-faint)] mt-2">
+              <span
+                className="inline-block w-3 h-3 rounded-sm shrink-0 opacity-60"
+                style={{
+                  background: "var(--ink-faint)",
+                  backgroundImage:
+                    "repeating-linear-gradient(45deg, rgba(255,255,255,0.5) 0 2px, transparent 2px 4px)",
+                }}
+              />
+              Meses futuros = proyección por cuotas ya comprometidas
             </div>
           )}
         </div>
