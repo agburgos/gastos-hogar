@@ -524,10 +524,19 @@ export default function DetallePage() {
                                       <td
                                         className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
                                         style={{ minWidth: 150, maxWidth: 150 }}
+                                        title={
+                                          (gasto.descripcion || "Sin descripción") +
+                                          (gasto.cuota_total && gasto.cuota_total > 1
+                                            ? ` — cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`
+                                            : "")
+                                        }
                                       >
                                         {gasto.descripcion || "Sin descripción"}
                                         {gasto.cuota_total && gasto.cuota_total > 1 && (
-                                          <span className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]">
+                                          <span
+                                            className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]"
+                                            title={`cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`}
+                                          >
                                             cuota {gasto.cuota_numero}/{gasto.cuota_total}
                                           </span>
                                         )}

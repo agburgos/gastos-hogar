@@ -32,6 +32,16 @@ interface SubAlerta {
   pct: number;
 }
 
+interface CuotaResumen {
+  grupoId: string;
+  descripcion: string;
+  montoPorCuota: number;
+  cuotaTotal: number;
+  cuotaActual: number;
+  cuotasRestantes: number;
+  saldoPendiente: number;
+}
+
 export default function DashboardPage() {
   const [mesSeleccionado, setMesSeleccionado] = useState(ymdLocal(new Date()).slice(0, 7));
   const [macros, setMacros] = useState<MacroData[]>([]);
@@ -46,6 +56,7 @@ export default function DashboardPage() {
   const [deudasResumen, setDeudasResumen] = useState<DeudaResumen[]>([]);
   const [deudasDeclaradas, setDeudasDeclaradas] = useState<DeudaResumen[]>([]);
   const [deudaTotalGeneral, setDeudaTotalGeneral] = useState(0);
+  const [cuotasResumen, setCuotasResumen] = useState<CuotaResumen[]>([]);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -276,6 +287,41 @@ export default function DashboardPage() {
 
       setDeudasGloria(gloriaDebeNeto);
       setDeudasAlberto(albertoDebeNeto);
+
+      // Gastos en cuotas activos: agrupar por cuota_grupo_id y calcular cuántas quedan
+      // (desde el mes seleccionado en adelante). Las cuotas existen como filas reales.
+      const { data: cuotasGastos } = await supabase
+        .from("gastos")
+        .select("descripcion, monto, fecha, cuota_grupo_id, cuota_numero, cuota_total")
+        .not("cuota_grupo_id", "is", null)
+        .gt("cuota_total", 1);
+
+      const gruposCuota = new Map<string, any[]>();
+      (cuotasGastos || []).forEach((g: any) => {
+        if (!gruposCuota.has(g.cuota_grupo_id)) gruposCuota.set(g.cuota_grupo_id, []);
+        gruposCuota.get(g.cuota_grupo_id)!.push(g);
+      });
+
+      const resumenCuotas: CuotaResumen[] = [];
+      gruposCuota.forEach((filas, grupoId) => {
+        const restantes = filas.filter((f) => f.fecha >= mesInicioStr);
+        if (restantes.length === 0) return; // cuota ya terminada
+        const saldoPendiente = restantes.reduce((s, f) => s + f.monto, 0);
+        const enEsteMes = filas.find((f) => f.fecha >= mesInicioStr && f.fecha < mesFinStr);
+        const proxima = restantes.sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+        const ref = enEsteMes || proxima;
+        resumenCuotas.push({
+          grupoId,
+          descripcion: ref.descripcion || "Sin título",
+          montoPorCuota: ref.monto,
+          cuotaTotal: ref.cuota_total,
+          cuotaActual: ref.cuota_numero,
+          cuotasRestantes: restantes.length,
+          saldoPendiente,
+        });
+      });
+      resumenCuotas.sort((a, b) => b.saldoPendiente - a.saldoPendiente);
+      setCuotasResumen(resumenCuotas);
 
       // Alertas por subcategoría (con presupuesto propio: pct_objetivo o monto_objetivo)
       const { data: subs } = await supabase
@@ -528,6 +574,34 @@ export default function DashboardPage() {
                 Ver detalles
               </Link>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {/* GASTOS EN CUOTAS */}
+      {cuotasResumen.length > 0 && (
+        <Card title="Gastos en cuotas">
+          <div className="space-y-3">
+            {cuotasResumen.map((c) => (
+              <div key={c.grupoId} className="flex justify-between items-center gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[14px] font-semibold truncate">{c.descripcion}</span>
+                    <Badge color="teal">
+                      {c.cuotaActual}/{c.cuotaTotal}
+                    </Badge>
+                  </div>
+                  <div className="text-[12px] text-[var(--ink-soft)] mt-0.5">
+                    {fmt(c.montoPorCuota)}/mes · quedan {c.cuotasRestantes} cuota
+                    {c.cuotasRestantes > 1 ? "s" : ""}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[13px] font-bold">{fmt(c.saldoPendiente)}</div>
+                  <div className="text-[11px] text-[var(--ink-soft)]">por pagar</div>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       )}

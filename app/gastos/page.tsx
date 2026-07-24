@@ -31,6 +31,7 @@ export default function GastosPage() {
   const [año, setAño] = useState(new Date().getFullYear());
   const [mesIdx, setMesIdx] = useState(new Date().getMonth());
   const [gastos, setGastos] = useState<Gasto[]>([]);
+  const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [montoEdit, setMontoEdit] = useState("");
@@ -218,8 +219,14 @@ export default function GastosPage() {
     await cargar();
   };
 
+  const gastosFiltrados = busqueda.trim()
+    ? gastos.filter((g) =>
+        (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase().trim())
+      )
+    : gastos;
+
   // Los abonos no son gasto (es plata entregada a la otra persona), no suman al total.
-  const total = gastos.reduce((sum, g) => sum + (g.es_abono ? 0 : g.monto), 0);
+  const total = gastosFiltrados.reduce((sum, g) => sum + (g.es_abono ? 0 : g.monto), 0);
 
   if (loading) {
     return (
@@ -251,11 +258,20 @@ export default function GastosPage() {
         <span className="ml-auto text-[13px] font-bold text-[var(--ink)]">{fmt(total)}</span>
       </div>
 
+      <input
+        type="text"
+        placeholder="🔍 Buscar gasto por título..."
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+      />
+
       {gastos.length === 0 ? (
         <Empty icon="📭" text="Sin gastos este mes" />
+      ) : gastosFiltrados.length === 0 ? (
+        <Empty icon="🔍" text={`Sin resultados para "${busqueda}"`} />
       ) : (
         <div className="bg-[var(--paper-raised)] rounded-2xl divide-y divide-[var(--rule)]">
-          {gastos.map((g) =>
+          {gastosFiltrados.map((g) =>
             editandoId === g.id ? (
               <div key={g.id} className="p-4 space-y-2">
                 <input
