@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui";
 import { fmt } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
@@ -606,15 +607,20 @@ export default function DetallePage() {
         />
       )}
 
-      {/* Tooltip de cuota: instantáneo y del color índigo (no el nativo lento y gris) */}
-      {cuotaTip && (
-        <div
-          className="fixed z-50 px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
-          style={{ left: cuotaTip.x + 12, top: cuotaTip.y + 12 }}
-        >
-          {cuotaTip.text}
-        </div>
-      )}
+      {/* Tooltip de cuota: instantáneo y del color índigo (no el nativo lento y gris).
+          Se renderiza por portal a document.body porque el div raíz tiene un transform
+          (-translate-x-1/2) que rompería el position:fixed del tooltip. */}
+      {cuotaTip &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed z-[100] px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
+            style={{ left: cuotaTip.x + 12, top: cuotaTip.y + 12 }}
+          >
+            {cuotaTip.text}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
