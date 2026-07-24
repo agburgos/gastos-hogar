@@ -11,8 +11,18 @@ interface GastoMacro {
   total_gastado: number;
 }
 
+interface CuotaGasto {
+  id: string;
+  descripcion: string | null;
+  monto: number;
+  cuota_numero: number | null;
+  cuota_total: number | null;
+  responsable_nombre: string;
+}
+
 export default function ResumenPage() {
   const [datos, setDatos] = useState<GastoMacro[]>([]);
+  const [cuotas, setCuotas] = useState<CuotaGasto[]>([]);
   const [mesSeleccionado, setMesSeleccionado] = useState(ymdLocal(new Date()).slice(0, 7));
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +43,26 @@ export default function ResumenPage() {
         .order("macro");
 
       setDatos(data || []);
+
+      // Gastos en cuotas del mes (para listarlos con su X/Y)
+      const { data: cuotasData } = await supabase
+        .from("gastos")
+        .select("id, descripcion, monto, cuota_numero, cuota_total, usuarios ( nombre )")
+        .gte("fecha", mesInicio)
+        .lt("fecha", mesFin)
+        .gt("cuota_total", 1)
+        .order("descripcion");
+
+      setCuotas(
+        (cuotasData || []).map((g: any) => ({
+          id: g.id,
+          descripcion: g.descripcion,
+          monto: g.monto,
+          cuota_numero: g.cuota_numero,
+          cuota_total: g.cuota_total,
+          responsable_nombre: g.usuarios?.nombre || "Desconocido",
+        }))
+      );
       setLoading(false);
     };
 
@@ -83,6 +113,27 @@ export default function ResumenPage() {
               <span>Total:</span>
               <span>{fmt(total)}</span>
             </div>
+          </div>
+        </Card>
+      )}
+
+      {!loading && cuotas.length > 0 && (
+        <Card title="Gastos en cuotas">
+          <div className="space-y-2 text-[14px]">
+            {cuotas.map((c) => (
+              <div key={c.id} className="flex justify-between items-center gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate">{c.descripcion || "Sin título"}</span>
+                    <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--teal-bg)] text-[var(--teal)] font-semibold text-[11px]">
+                      cuota {c.cuota_numero}/{c.cuota_total}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-[var(--mid)]">{c.responsable_nombre}</div>
+                </div>
+                <span className="font-bold shrink-0">{fmt(c.monto)}</span>
+              </div>
+            ))}
           </div>
         </Card>
       )}
