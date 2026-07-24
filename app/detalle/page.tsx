@@ -16,6 +16,8 @@ interface GastoRaw {
   categoria_id: string;
   responsable: string;
   ambito: string;
+  cuota_numero: number | null;
+  cuota_total: number | null;
 }
 
 interface ResponsableNode {
@@ -72,7 +74,7 @@ export default function DetallePage() {
       .from("gastos")
       .select(
         `
-        id, monto, es_abono, descripcion, fecha, categoria_id, ambito,
+        id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total,
         categorias ( nombre, categorias_macro ( nombre ) ),
         usuarios ( nombre )
       `
@@ -92,6 +94,8 @@ export default function DetallePage() {
       categoria_id: g.categoria_id,
       ambito: g.ambito || "ninguno",
       responsable: g.usuarios?.nombre || "Desconocido",
+      cuota_numero: g.cuota_numero ?? null,
+      cuota_total: g.cuota_total ?? null,
     }));
 
     setGastosRaw(parsed);
@@ -522,6 +526,11 @@ export default function DetallePage() {
                                         style={{ minWidth: 150, maxWidth: 150 }}
                                       >
                                         {gasto.descripcion || "Sin descripción"}
+                                        {gasto.cuota_total && gasto.cuota_total > 1 && (
+                                          <span className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]">
+                                            cuota {gasto.cuota_numero}/{gasto.cuota_total}
+                                          </span>
+                                        )}
                                       </td>
                                       <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
                                         {gasto.responsable}

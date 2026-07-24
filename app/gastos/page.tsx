@@ -18,6 +18,8 @@ interface Gasto {
   categoria_nombre: string;
   macro_nombre: string;
   responsable_nombre: string;
+  cuota_numero: number | null;
+  cuota_total: number | null;
 }
 
 const MESES = [
@@ -88,7 +90,7 @@ export default function GastosPage() {
       .from("gastos")
       .select(
         `
-        id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id,
+        id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id, cuota_numero, cuota_total,
         categorias ( nombre, categorias_macro ( nombre ) ),
         usuarios ( nombre )
       `
@@ -110,6 +112,8 @@ export default function GastosPage() {
       categoria_nombre: g.categorias?.nombre || "Sin categoría",
       macro_nombre: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
       responsable_nombre: g.usuarios?.nombre || "Desconocido",
+      cuota_numero: g.cuota_numero ?? null,
+      cuota_total: g.cuota_total ?? null,
     }));
 
     setGastos(parsed);
@@ -288,6 +292,9 @@ export default function GastosPage() {
                     <span className="text-[14px] font-semibold truncate">{g.descripcion || "Sin título"}</span>
                     {g.recurrente && <Badge color="gold">↻</Badge>}
                     {g.es_abono && <Badge color="green">Abono</Badge>}
+                    {g.cuota_total && g.cuota_total > 1 && (
+                      <Badge color="teal">cuota {g.cuota_numero}/{g.cuota_total}</Badge>
+                    )}
                   </div>
                   <div className="text-[12px] text-[var(--ink-soft)] mt-0.5">
                     {g.macro_nombre} › {g.categoria_nombre} · {g.responsable_nombre}
