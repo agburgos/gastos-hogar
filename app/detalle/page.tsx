@@ -62,6 +62,7 @@ export default function DetallePage() {
     dia: number;
   } | null>(null);
   const [busqueda, setBusqueda] = useState("");
+  const [cuotaTip, setCuotaTip] = useState<{ text: string; x: number; y: number } | null>(null);
 
   const fetchGastos = async () => {
     setPending(true);
@@ -524,18 +525,27 @@ export default function DetallePage() {
                                       <td
                                         className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
                                         style={{ minWidth: 150, maxWidth: 150 }}
-                                        title={
-                                          (gasto.descripcion || "Sin descripción") +
-                                          (gasto.cuota_total && gasto.cuota_total > 1
-                                            ? ` — cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`
-                                            : "")
-                                        }
+                                        title={gasto.descripcion || "Sin descripción"}
                                       >
                                         {gasto.descripcion || "Sin descripción"}
                                         {gasto.cuota_total && gasto.cuota_total > 1 && (
                                           <span
-                                            className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]"
-                                            title={`cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`}
+                                            className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px] cursor-help"
+                                            onMouseEnter={(e) =>
+                                              setCuotaTip({
+                                                text: `Cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`,
+                                                x: e.clientX,
+                                                y: e.clientY,
+                                              })
+                                            }
+                                            onMouseMove={(e) =>
+                                              setCuotaTip({
+                                                text: `Cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`,
+                                                x: e.clientX,
+                                                y: e.clientY,
+                                              })
+                                            }
+                                            onMouseLeave={() => setCuotaTip(null)}
                                           >
                                             cuota {gasto.cuota_numero}/{gasto.cuota_total}
                                           </span>
@@ -594,6 +604,16 @@ export default function DetallePage() {
           onCerrar={() => setCeldaSeleccionada(null)}
           onCambio={fetchGastos}
         />
+      )}
+
+      {/* Tooltip de cuota: instantáneo y del color índigo (no el nativo lento y gris) */}
+      {cuotaTip && (
+        <div
+          className="fixed z-50 px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
+          style={{ left: cuotaTip.x + 12, top: cuotaTip.y + 12 }}
+        >
+          {cuotaTip.text}
+        </div>
       )}
     </div>
   );
