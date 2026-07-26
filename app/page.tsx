@@ -42,6 +42,14 @@ interface CuotaResumen {
   saldoPendiente: number;
 }
 
+interface GastoItem {
+  id: string;
+  descripcion: string;
+  monto: number;
+  fecha: string;
+  responsable: string;
+}
+
 export default function DashboardPage() {
   const [mesSeleccionado, setMesSeleccionado] = useState(ymdLocal(new Date()).slice(0, 7));
   const [macros, setMacros] = useState<MacroData[]>([]);
@@ -57,6 +65,8 @@ export default function DashboardPage() {
   const [deudasDeclaradas, setDeudasDeclaradas] = useState<DeudaResumen[]>([]);
   const [deudaTotalGeneral, setDeudaTotalGeneral] = useState(0);
   const [cuotasResumen, setCuotasResumen] = useState<CuotaResumen[]>([]);
+  const [ultimosGastos, setUltimosGastos] = useState<GastoItem[]>([]);
+  const [mayoresGastos, setMayoresGastos] = useState<GastoItem[]>([]);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -323,6 +333,37 @@ export default function DashboardPage() {
       resumenCuotas.sort((a, b) => b.saldoPendiente - a.saldoPendiente);
       setCuotasResumen(resumenCuotas);
 
+      // Últimos y mayores gastos del mes (excluye abonos, que no son gasto)
+      const { data: gastosMes } = await supabase
+        .from("gastos")
+        .select("id, descripcion, monto, fecha, created_at, es_abono, usuarios ( nombre )")
+        .gte("fecha", mesInicioStr)
+        .lt("fecha", mesFinStr)
+        .eq("es_abono", false);
+
+      const itemsMes: GastoItem[] = (gastosMes || []).map((g: any) => ({
+        id: g.id,
+        descripcion: g.descripcion || "Sin título",
+        monto: g.monto,
+        fecha: g.fecha,
+        responsable: g.usuarios?.nombre || "",
+      }));
+
+      const ultimos = [...(gastosMes || [])]
+        .sort((a: any, b: any) => (b.created_at || b.fecha).localeCompare(a.created_at || a.fecha))
+        .slice(0, 5)
+        .map((g: any) => ({
+          id: g.id,
+          descripcion: g.descripcion || "Sin título",
+          monto: g.monto,
+          fecha: g.fecha,
+          responsable: g.usuarios?.nombre || "",
+        }));
+      setUltimosGastos(ultimos);
+
+      const mayores = [...itemsMes].sort((a, b) => b.monto - a.monto).slice(0, 5);
+      setMayoresGastos(mayores);
+
       // Alertas por subcategoría (con presupuesto propio: pct_objetivo o monto_objetivo)
       const { data: subs } = await supabase
         .from("categorias")
@@ -475,6 +516,57 @@ export default function DashboardPage() {
         <div className="slide-in mb-6 bg-[var(--paper-raised)] rounded-2xl p-4 flex items-center gap-3">
           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: "var(--green)" }} />
           <span className="text-[14px] font-semibold">Cuentas balanceadas</span>
+        </div>
+      )}
+
+      {/* ÚLTIMOS Y MAYORES GASTOS */}
+      {(ultimosGastos.length > 0 || mayoresGastos.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <Card>
+            <div className="flex justify-between items-baseline mb-2">
+              <span className="text-[13px] font-bold">Últimos gastos</span>
+              <Link href="/gastos" className="text-[12px] font-semibold text-[var(--accent)]">
+                Ver más →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {ultimosGastos.map((g) => (
+                <div key={g.id} className="flex justify-between items-center gap-2 text-[13px]">
+                  <div className="min-w-0">
+                    <div className="truncate">{g.descripcion}</div>
+                    <div className="text-[11px] text-[var(--ink-soft)]">
+                      {new Date(g.fecha + "T00:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                      {g.responsable ? ` · ${g.responsable}` : ""}
+                    </div>
+                  </div>
+                  <span className="font-semibold shrink-0">{fmt(g.monto)}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex justify-between items-baseline mb-2">
+              <span className="text-[13px] font-bold">Mayores gastos</span>
+              <Link href="/gastos" className="text-[12px] font-semibold text-[var(--accent)]">
+                Ver más →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {mayoresGastos.map((g) => (
+                <div key={g.id} className="flex justify-between items-center gap-2 text-[13px]">
+                  <div className="min-w-0">
+                    <div className="truncate">{g.descripcion}</div>
+                    <div className="text-[11px] text-[var(--ink-soft)]">
+                      {new Date(g.fecha + "T00:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
+                      {g.responsable ? ` · ${g.responsable}` : ""}
+                    </div>
+                  </div>
+                  <span className="font-semibold shrink-0">{fmt(g.monto)}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
