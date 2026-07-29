@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { createPortal } from "react-dom";
 import { Card } from "@/components/ui";
 import { fmt, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
@@ -63,7 +62,6 @@ export default function DetallePage() {
     dia: number;
   } | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  const [cuotaTip, setCuotaTip] = useState<{ text: string; x: number; y: number } | null>(null);
 
   const fetchGastos = async () => {
     setPending(true);
@@ -526,29 +524,14 @@ export default function DetallePage() {
                                       className="border-t border-[var(--border)]/30 bg-[var(--paper-raised-2)]"
                                     >
                                       <td
-                                        className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] truncate"
-                                        style={{ minWidth: 150, maxWidth: 150 }}
+                                        className="px-3 py-1 pl-14 sticky left-0 bg-[var(--paper-raised-2)] z-10 text-[11px] text-[var(--mid)] align-top"
+                                        style={{ minWidth: 150, maxWidth: 190 }}
                                       >
-                                        {gasto.descripcion || "Sin descripción"}
+                                        <div className="whitespace-normal leading-snug break-words">
+                                          {gasto.descripcion || "Sin descripción"}
+                                        </div>
                                         {gasto.cuota_total && gasto.cuota_total > 1 && (
-                                          <span
-                                            className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px] cursor-help"
-                                            onMouseEnter={(e) =>
-                                              setCuotaTip({
-                                                text: `Cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`,
-                                                x: e.clientX,
-                                                y: e.clientY,
-                                              })
-                                            }
-                                            onMouseMove={(e) =>
-                                              setCuotaTip({
-                                                text: `Cuota ${gasto.cuota_numero} de ${gasto.cuota_total}`,
-                                                x: e.clientX,
-                                                y: e.clientY,
-                                              })
-                                            }
-                                            onMouseLeave={() => setCuotaTip(null)}
-                                          >
+                                          <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]">
                                             cuota {gasto.cuota_numero}/{gasto.cuota_total}
                                           </span>
                                         )}
@@ -607,31 +590,6 @@ export default function DetallePage() {
           onCambio={fetchGastos}
         />
       )}
-
-      {/* Tooltip de cuota: instantáneo y del color índigo (no el nativo lento y gris).
-          Se renderiza por portal a document.body porque el div raíz tiene un transform
-          (-translate-x-1/2) que rompería el position:fixed del tooltip. */}
-      {cuotaTip &&
-        typeof window !== "undefined" &&
-        createPortal(
-          (() => {
-            const anchoAprox = 120;
-            const abajo = cuotaTip.y > window.innerHeight - 60; // cerca del borde inferior
-            const left = Math.max(8, Math.min(cuotaTip.x + 12, window.innerWidth - anchoAprox));
-            const style: React.CSSProperties = abajo
-              ? { left, top: cuotaTip.y - 12, transform: "translateY(-100%)" }
-              : { left, top: cuotaTip.y + 16 };
-            return (
-              <div
-                className="fixed z-[100] px-2.5 py-1 rounded-lg bg-[var(--indigo)] text-white font-semibold text-[12px] shadow-lg pointer-events-none whitespace-nowrap"
-                style={style}
-              >
-                {cuotaTip.text}
-              </div>
-            );
-          })(),
-          document.body
-        )}
     </div>
   );
 }
