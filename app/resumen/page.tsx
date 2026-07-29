@@ -47,7 +47,7 @@ export default function ResumenPage() {
       // Gastos en cuotas del mes (para listarlos con su X/Y)
       const { data: cuotasData } = await supabase
         .from("gastos")
-        .select("id, descripcion, monto, cuota_numero, cuota_total, usuarios ( nombre )")
+        .select("id, descripcion, monto, cuota_numero, cuota_total, responsable:responsable_id ( nombre )")
         .gte("fecha", mesInicio)
         .lt("fecha", mesFin)
         .gt("cuota_total", 1)
@@ -60,7 +60,7 @@ export default function ResumenPage() {
           monto: g.monto,
           cuota_numero: g.cuota_numero,
           cuota_total: g.cuota_total,
-          responsable_nombre: g.usuarios?.nombre || "Desconocido",
+          responsable_nombre: g.responsable?.nombre || "Desconocido",
         }))
       );
       setLoading(false);

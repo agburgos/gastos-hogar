@@ -78,7 +78,7 @@ export default function DetallePage() {
         `
         id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total,
         categorias ( nombre, categorias_macro ( nombre ) ),
-        usuarios ( nombre )
+        responsable:responsable_id ( nombre )
       `
       )
       .gte("fecha", mesInicioStr)
@@ -95,7 +95,7 @@ export default function DetallePage() {
       categoria: g.categorias?.nombre || "Sin categoría",
       categoria_id: g.categoria_id,
       ambito: g.ambito || "ninguno",
-      responsable: g.usuarios?.nombre || "Desconocido",
+      responsable: g.responsable?.nombre || "Desconocido",
       cuota_numero: g.cuota_numero ?? null,
       cuota_total: g.cuota_total ?? null,
     }));

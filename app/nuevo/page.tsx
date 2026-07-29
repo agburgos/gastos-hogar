@@ -33,7 +33,8 @@ export default function NuevoPage() {
   const [monto, setMonto] = useState("");
   const [fecha, setFecha] = useState(ymdLocal(new Date()));
   const [mesSelector, setMesSelector] = useState<"actual" | "proximo">("actual");
-  const [compartido, setCompartido] = useState(true);
+  // reparto: 50/50, o 100% para una persona (aunque la pague la otra)
+  const [reparto, setReparto] = useState<"5050" | "gloria" | "alberto">("5050");
   const [descripcion, setDescripcion] = useState("");
   const [ambito, setAmbito] = useState("ninguno");
   const [macroSeleccionada, setMacroSeleccionada] = useState<string | null>(null);
@@ -99,6 +100,19 @@ export default function NuevoPage() {
       const parsedMonto = parseFloat(monto);
       const filas = [];
 
+      // Reparto: 50/50 (compartido, sin beneficiario) o 100% a una persona.
+      // Un abono siempre es transferencia compartida (sin beneficiario).
+      const GLORIA_ID = USUARIOS[0].id;
+      const ALBERTO_ID = USUARIOS[1].id;
+      const beneficiarioId = esAbono
+        ? null
+        : reparto === "gloria"
+        ? GLORIA_ID
+        : reparto === "alberto"
+        ? ALBERTO_ID
+        : null;
+      const compartido = true; // el reparto real lo determina beneficiario_id
+
       let fechaBase = new Date(fecha + "T00:00:00");
       if (mesSelector === "proximo") {
         fechaBase.setMonth(fechaBase.getMonth() + 1);
@@ -120,6 +134,7 @@ export default function NuevoPage() {
             responsable_id: responsableSeleccionado,
             fecha: ymdLocal(nextFecha),
             compartido,
+            beneficiario_id: beneficiarioId,
             ambito,
             cuota_grupo_id: cuotaGrupoId,
             cuota_numero: i + 1,
@@ -133,7 +148,8 @@ export default function NuevoPage() {
           categoria_id: categoriaSeleccionada,
           responsable_id: responsableSeleccionado,
           fecha: ymdLocal(fechaBase),
-          compartido: esAbono ? true : compartido, // un abono siempre es compartido
+          compartido,
+          beneficiario_id: beneficiarioId,
           ambito,
           recurrente,
           es_abono: esAbono,
@@ -272,25 +288,40 @@ export default function NuevoPage() {
         </div>
       </Card>
 
-      {/* Compartido */}
+      {/* Reparto + opciones */}
       <Card title="Gasto">
         <div className="space-y-3">
-          <label className={`flex items-center gap-3 ${esAbono ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
-            <input
-              type="checkbox"
-              checked={compartido}
-              disabled={esAbono}
-              onChange={(e) => setCompartido(e.target.checked)}
-              className="w-5 h-5"
-            />
-            <span className="text-[14px]">
-              {esAbono
-                ? "Compartido (obligatorio en abonos)"
-                : compartido
-                ? "Compartido entre ambos"
-                : "Gasto personal"}
-            </span>
-          </label>
+          {!esAbono && (
+            <div>
+              <div className="text-[12px] text-[var(--ink-soft)] mb-2">¿Cómo se reparte?</div>
+              <div className="flex gap-2">
+                {([
+                  { v: "5050", label: "Compartido 50/50" },
+                  { v: "gloria", label: "100% Gloria" },
+                  { v: "alberto", label: "100% Alberto" },
+                ] as const).map((r) => (
+                  <button
+                    key={r.v}
+                    type="button"
+                    onClick={() => setReparto(r.v)}
+                    className={`flex-1 px-2 py-2 rounded-lg font-bold text-[12px] transition-colors ${
+                      reparto === r.v
+                        ? "bg-[var(--accent)] text-white"
+                        : "bg-[var(--accent-bg)] text-[var(--accent)]"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+              {reparto !== "5050" && (
+                <div className="text-[11px] text-[var(--ink-soft)] mt-2">
+                  Lo paga quien elijas en “¿Quién gastó?”, pero el 100% se carga a{" "}
+                  {reparto === "gloria" ? "Gloria" : "Alberto"}.
+                </div>
+              )}
+            </div>
+          )}
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -310,7 +341,7 @@ export default function NuevoPage() {
                   setCuotas(false);
                   setNumCuotas(1);
                   setRecurrente(false);
-                  setCompartido(true); // un abono siempre es transferencia entre ambos
+                  setReparto("5050"); // un abono siempre es transferencia entre ambos
                 }
               }}
               className="w-5 h-5"

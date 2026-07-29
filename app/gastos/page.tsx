@@ -20,6 +20,7 @@ interface Gasto {
   responsable_nombre: string;
   cuota_numero: number | null;
   cuota_total: number | null;
+  beneficiario_nombre: string | null;
 }
 
 const MESES = [
@@ -91,9 +92,10 @@ export default function GastosPage() {
       .from("gastos")
       .select(
         `
-        id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id, cuota_numero, cuota_total,
+        id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id, cuota_numero, cuota_total, responsable_id, beneficiario_id,
         categorias ( nombre, categorias_macro ( nombre ) ),
-        usuarios ( nombre )
+        responsable:responsable_id ( nombre ),
+        beneficiario:beneficiario_id ( nombre )
       `
       )
       .gte("fecha", mesInicio.toISOString().slice(0, 10))
@@ -112,9 +114,13 @@ export default function GastosPage() {
       categoria_id: g.categoria_id,
       categoria_nombre: g.categorias?.nombre || "Sin categoría",
       macro_nombre: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
-      responsable_nombre: g.usuarios?.nombre || "Desconocido",
+      responsable_nombre: g.responsable?.nombre || "Desconocido",
       cuota_numero: g.cuota_numero ?? null,
       cuota_total: g.cuota_total ?? null,
+      beneficiario_nombre:
+        g.beneficiario_id && g.beneficiario_id !== g.responsable_id
+          ? g.beneficiario?.nombre || null
+          : null,
     }));
 
     setGastos(parsed);
@@ -308,6 +314,7 @@ export default function GastosPage() {
                     <span className="text-[14px] font-semibold truncate">{g.descripcion || "Sin título"}</span>
                     {g.recurrente && <Badge color="gold">↻</Badge>}
                     {g.es_abono && <Badge color="green">Abono</Badge>}
+                    {g.beneficiario_nombre && <Badge color="red">100% {g.beneficiario_nombre}</Badge>}
                     {g.cuota_total && g.cuota_total > 1 && (
                       <Badge color="teal">cuota {g.cuota_numero}/{g.cuota_total}</Badge>
                     )}

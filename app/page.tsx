@@ -54,8 +54,12 @@ export default function DashboardPage() {
   const [mesSeleccionado, setMesSeleccionado] = useState(ymdLocal(new Date()).slice(0, 7));
   const [macros, setMacros] = useState<MacroData[]>([]);
   const [ingreso, setIngreso] = useState<number>(0);
-  const [gloria, setGloria] = useState(0);
+  const [gloria, setGloria] = useState(0); // display: total que pagó Gloria (50/50 + cargos)
   const [alberto, setAlberto] = useState(0);
+  const [g50Gloria, setG50Gloria] = useState(0); // solo la parte 50/50 (para la mitad)
+  const [g50Alberto, setG50Alberto] = useState(0);
+  const [cargoGloria, setCargoGloria] = useState(0); // Gloria pagó, 100% de Alberto → Alberto le debe
+  const [cargoAlberto, setCargoAlberto] = useState(0); // Alberto pagó, 100% de Gloria → Gloria le debe
   const [abonosGloria, setAbonosGloria] = useState(0);
   const [abonosAlberto, setAbonosAlberto] = useState(0);
   const [deudasGloria, setDeudasGloria] = useState(0);
@@ -149,38 +153,55 @@ export default function DashboardPage() {
 
       if (ingresoData) setIngreso(ingresoData.monto);
 
-      // Traer gastos compartidos por persona para este mes
+      // Traer gastos por persona para este mes
+      const GLORIA = "9a7597c3-de3c-4cdc-9bdf-78dde625cff0";
+      const ALBERTO = "6268104e-7c3c-4643-b4f6-7eb44a636f03";
       const { data: allGastos } = await supabase
         .from("gastos")
-        .select("responsable_id, monto, compartido, es_abono")
+        .select("responsable_id, beneficiario_id, monto, compartido, es_abono")
         .gte("fecha", mesInicioStr)
         .lt("fecha", mesFinStr);
 
-      let gloriaGastó = 0;
-      let albertoGastó = 0;
+      let g50G = 0; // parte 50/50 pagada por Gloria
+      let g50A = 0;
+      let cargoG = 0; // Gloria pagó, 100% de Alberto (Alberto le debe todo)
+      let cargoA = 0; // Alberto pagó, 100% de Gloria
       let abonóGloria = 0;
       let abonóAlberto = 0;
 
       allGastos?.forEach((g: any) => {
-        if (!g.compartido) return;
-        const esGloria = g.responsable_id === "9a7597c3-de3c-4cdc-9bdf-78dde625cff0";
-        const esAlberto = g.responsable_id === "6268104e-7c3c-4643-b4f6-7eb44a636f03";
+        const M = g.monto;
+        const pagaGloria = g.responsable_id === GLORIA;
+        const pagaAlberto = g.responsable_id === ALBERTO;
+
         if (g.es_abono) {
-          // Un abono es plata que la persona entrega para saldar el mes:
-          // no es gasto, descuenta directo de lo que esa persona debe.
-          if (esGloria) abonóGloria += g.monto;
-          else if (esAlberto) abonóAlberto += g.monto;
-        } else {
-          if (esGloria) gloriaGastó += g.monto;
-          else if (esAlberto) albertoGastó += g.monto;
+          if (pagaGloria) abonóGloria += M;
+          else if (pagaAlberto) abonóAlberto += M;
+          return;
         }
+        // Gasto 100% de una persona (beneficiario distinto de quien paga)
+        if (g.beneficiario_id && g.beneficiario_id !== g.responsable_id) {
+          if (pagaGloria) cargoG += M; // Gloria pagó algo 100% de Alberto
+          else if (pagaAlberto) cargoA += M;
+          return;
+        }
+        // Personal (beneficiario = quien paga, o compartido=false sin beneficiario): sin efecto en balance
+        if (g.beneficiario_id && g.beneficiario_id === g.responsable_id) return;
+        if (!g.compartido) return;
+        // Compartido 50/50
+        if (pagaGloria) g50G += M;
+        else if (pagaAlberto) g50A += M;
       });
 
       setAbonosGloria(abonóGloria);
       setAbonosAlberto(abonóAlberto);
-
-      setGloria(gloriaGastó);
-      setAlberto(albertoGastó);
+      setG50Gloria(g50G);
+      setG50Alberto(g50A);
+      setCargoGloria(cargoG);
+      setCargoAlberto(cargoA);
+      // Display "gastado por persona": lo que cada uno efectivamente pagó (50/50 + cargos)
+      setGloria(g50G + cargoG);
+      setAlberto(g50A + cargoA);
 
       // Auto-descuento: para deudas activas, calcular cuántos meses han pasado
       // desde que se activó el pago y descontar esa cantidad de cuotas del saldo.
@@ -336,7 +357,7 @@ export default function DashboardPage() {
       // Últimos y mayores gastos del mes (excluye abonos, que no son gasto)
       const { data: gastosMes } = await supabase
         .from("gastos")
-        .select("id, descripcion, monto, fecha, created_at, es_abono, usuarios ( nombre )")
+        .select("id, descripcion, monto, fecha, created_at, es_abono, responsable:responsable_id ( nombre )")
         .gte("fecha", mesInicioStr)
         .lt("fecha", mesFinStr)
         .eq("es_abono", false);
@@ -346,7 +367,7 @@ export default function DashboardPage() {
         descripcion: g.descripcion || "Sin título",
         monto: g.monto,
         fecha: g.fecha,
-        responsable: g.usuarios?.nombre || "",
+        responsable: g.responsable?.nombre || "",
       }));
 
       const ultimos = [...(gastosMes || [])]
@@ -357,7 +378,7 @@ export default function DashboardPage() {
           descripcion: g.descripcion || "Sin título",
           monto: g.monto,
           fecha: g.fecha,
-          responsable: g.usuarios?.nombre || "",
+          responsable: g.responsable?.nombre || "",
         }));
       setUltimosGastos(ultimos);
 
@@ -429,11 +450,17 @@ export default function DashboardPage() {
   }
 
   const totalGasto = gloria + alberto;
-  const mitad = totalGasto / 2;
-  // Los abonos son transferencias para saldar el mes: suman a favor de quien
-  // los hizo y descuentan lo que la otra persona tiene por cobrar.
-  const saldoGloria = gloria - mitad - deudasGloria + abonosGloria - abonosAlberto; // Positivo = le deben
-  const saldoAlberto = alberto - mitad - deudasAlberto + abonosAlberto - abonosGloria;
+  // La mitad se calcula SOLO sobre la parte 50/50; los cargos 100% van completos.
+  const mitad = (g50Gloria + g50Alberto) / 2;
+  // Saldo (positivo = le deben a Gloria):
+  //  · parte 50/50: lo que pagó por sobre su mitad
+  //  · cargos 100%: lo que pagó por el otro (a favor) menos lo que el otro pagó por ella (en contra)
+  //  · abonos: transferencias para saldar
+  //  · deudas: cuota del mes
+  const saldoGloria =
+    g50Gloria - mitad + cargoGloria - cargoAlberto + abonosGloria - abonosAlberto - deudasGloria;
+  const saldoAlberto =
+    g50Alberto - mitad + cargoAlberto - cargoGloria + abonosAlberto - abonosGloria - deudasAlberto;
 
   let resumenPago = "";
   let montoAPagar = 0;
