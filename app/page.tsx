@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, ProgressBar, Badge, Btn } from "@/components/ui";
 import CompararMeses from "@/components/CompararMeses";
+import CuotaEditor from "@/components/CuotaEditor";
 import { fmt, ymdLocal } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
@@ -71,6 +72,8 @@ export default function DashboardPage() {
   const [cuotasResumen, setCuotasResumen] = useState<CuotaResumen[]>([]);
   const [ultimosGastos, setUltimosGastos] = useState<GastoItem[]>([]);
   const [mayoresGastos, setMayoresGastos] = useState<GastoItem[]>([]);
+  const [editandoCuota, setEditandoCuota] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
@@ -439,7 +442,7 @@ export default function DashboardPage() {
     };
 
     fetch();
-  }, [mesSeleccionado]);
+  }, [mesSeleccionado, reload]);
 
   if (pending) {
     return (
@@ -717,12 +720,25 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-[13px] font-bold">{fmt(c.saldoPendiente)}</div>
-                  <div className="text-[11px] text-[var(--ink-soft)]">por pagar</div>
+                  <button
+                    onClick={() => setEditandoCuota(c.grupoId)}
+                    className="text-[11px] font-semibold text-[var(--accent)]"
+                  >
+                    Editar
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </Card>
+      )}
+
+      {editandoCuota && (
+        <CuotaEditor
+          grupoId={editandoCuota}
+          onClose={() => setEditandoCuota(null)}
+          onSaved={() => setReload((x) => x + 1)}
+        />
       )}
 
       {/* PRESUPUESTO POR CATEGORÍA */}
