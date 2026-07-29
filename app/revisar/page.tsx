@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, Empty } from "@/components/ui";
-import { fmt } from "@/lib/format";
+import { fmt, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
 interface GastoRevisar {
@@ -136,7 +136,7 @@ export default function RevisarPage() {
   grupos.sort((a, b) => b.gastos.length - a.gastos.length || b.total - a.total);
 
   if (busqueda.trim()) {
-    grupos = grupos.filter((g) => g.clave.includes(busqueda.toLowerCase()));
+    grupos = grupos.filter((g) => norm(g.clave).includes(norm(busqueda)));
   }
 
   return (

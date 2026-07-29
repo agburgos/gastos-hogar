@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, Badge, Empty } from "@/components/ui";
-import { fmt, ymdLocal } from "@/lib/format";
+import { fmt, ymdLocal, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
 interface Gasto {
@@ -228,9 +228,7 @@ export default function GastosPage() {
   };
 
   const gastosFiltrados = busqueda.trim()
-    ? gastos.filter((g) =>
-        (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase().trim())
-      )
+    ? gastos.filter((g) => norm(g.descripcion || "").includes(norm(busqueda)))
     : gastos;
 
   // Los abonos no son gasto (es plata entregada a la otra persona), no suman al total.

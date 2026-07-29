@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Card } from "@/components/ui";
-import { fmt } from "@/lib/format";
+import { fmt, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 
 interface GastoRaw {
@@ -291,7 +291,7 @@ export default function DetallePage() {
           <div className="mt-2 space-y-1.5 max-h-64 overflow-y-auto">
             {gastosRaw
               .filter((g) =>
-                (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase())
+                norm(g.descripcion || "").includes(norm(busqueda))
               )
               .map((g) => (
                 <div
@@ -309,7 +309,7 @@ export default function DetallePage() {
                 </div>
               ))}
             {gastosRaw.filter((g) =>
-              (g.descripcion || "").toLowerCase().includes(busqueda.toLowerCase())
+              norm(g.descripcion || "").includes(norm(busqueda))
             ).length === 0 && (
               <div className="text-[12px] text-[var(--ink-faint)] text-center py-2">
                 Sin resultados este mes

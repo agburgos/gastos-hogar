@@ -26,3 +26,12 @@ export function ymdLocal(d: Date): string {
 export function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
+
+// Normaliza texto para búsqueda: minúsculas y sin acentos (mantención == mantencion).
+export function norm(s: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
