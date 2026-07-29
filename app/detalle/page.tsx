@@ -18,6 +18,7 @@ interface GastoRaw {
   ambito: string;
   cuota_numero: number | null;
   cuota_total: number | null;
+  beneficiario: string | null; // nombre de quien asume el 100% (si aplica)
 }
 
 interface ResponsableNode {
@@ -77,7 +78,7 @@ export default function DetallePage() {
       .from("gastos")
       .select(
         `
-        id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total, responsable_id,
+        id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total, responsable_id, beneficiario_id,
         categorias ( nombre, categorias_macro ( nombre ) )
       `
       )
@@ -98,6 +99,10 @@ export default function DetallePage() {
       responsable: nombrePorId.get(g.responsable_id) || "Desconocido",
       cuota_numero: g.cuota_numero ?? null,
       cuota_total: g.cuota_total ?? null,
+      beneficiario:
+        g.beneficiario_id && g.beneficiario_id !== g.responsable_id
+          ? nombrePorId.get(g.beneficiario_id) || null
+          : null,
     }));
 
     setGastosRaw(parsed);
@@ -530,11 +535,18 @@ export default function DetallePage() {
                                         <div className="whitespace-normal leading-snug break-words">
                                           {gasto.descripcion || "Sin descripción"}
                                         </div>
-                                        {gasto.cuota_total && gasto.cuota_total > 1 && (
-                                          <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]">
-                                            cuota {gasto.cuota_numero}/{gasto.cuota_total}
-                                          </span>
-                                        )}
+                                        <div className="flex flex-wrap gap-1 mt-0.5">
+                                          {gasto.cuota_total && gasto.cuota_total > 1 && (
+                                            <span className="inline-block px-1.5 py-0.5 rounded bg-[var(--indigo-bg)] text-[var(--indigo)] font-semibold text-[10px]">
+                                              cuota {gasto.cuota_numero}/{gasto.cuota_total}
+                                            </span>
+                                          )}
+                                          {gasto.beneficiario && (
+                                            <span className="inline-block px-1.5 py-0.5 rounded bg-[var(--red-bg)] text-[var(--red)] font-semibold text-[10px]">
+                                              100% {gasto.beneficiario}
+                                            </span>
+                                          )}
+                                        </div>
                                       </td>
                                       <td className="px-2 py-1 text-[11px] font-medium text-[var(--charcoal)]">
                                         {gasto.responsable}

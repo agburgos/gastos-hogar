@@ -49,6 +49,7 @@ interface GastoItem {
   monto: number;
   fecha: string;
   responsable: string;
+  beneficiario: string | null;
 }
 
 export default function DashboardPage() {
@@ -363,29 +364,29 @@ export default function DashboardPage() {
 
       const { data: gastosMes } = await supabase
         .from("gastos")
-        .select("id, descripcion, monto, fecha, created_at, es_abono, responsable_id")
+        .select("id, descripcion, monto, fecha, created_at, es_abono, responsable_id, beneficiario_id")
         .gte("fecha", mesInicioStr)
         .lt("fecha", mesFinStr)
         .eq("es_abono", false);
 
-      const itemsMes: GastoItem[] = (gastosMes || []).map((g: any) => ({
+      const aItem = (g: any): GastoItem => ({
         id: g.id,
         descripcion: g.descripcion || "Sin título",
         monto: g.monto,
         fecha: g.fecha,
         responsable: nombrePorId.get(g.responsable_id) || "",
-      }));
+        beneficiario:
+          g.beneficiario_id && g.beneficiario_id !== g.responsable_id
+            ? nombrePorId.get(g.beneficiario_id) || null
+            : null,
+      });
+
+      const itemsMes: GastoItem[] = (gastosMes || []).map(aItem);
 
       const ultimos = [...(gastosMes || [])]
         .sort((a: any, b: any) => (b.created_at || b.fecha).localeCompare(a.created_at || a.fecha))
         .slice(0, 5)
-        .map((g: any) => ({
-          id: g.id,
-          descripcion: g.descripcion || "Sin título",
-          monto: g.monto,
-          fecha: g.fecha,
-          responsable: nombrePorId.get(g.responsable_id) || "",
-        }));
+        .map(aItem);
       setUltimosGastos(ultimos);
 
       const mayores = [...itemsMes].sort((a, b) => b.monto - a.monto).slice(0, 5);
@@ -566,7 +567,14 @@ export default function DashboardPage() {
               {ultimosGastos.map((g) => (
                 <div key={g.id} className="flex justify-between items-center gap-2 text-[13px]">
                   <div className="min-w-0">
-                    <div className="truncate">{g.descripcion}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate">{g.descripcion}</span>
+                      {g.beneficiario && (
+                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--red-bg)] text-[var(--red)] font-semibold text-[10px]">
+                          100% {g.beneficiario}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-[var(--ink-soft)]">
                       {new Date(g.fecha + "T00:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
                       {g.responsable ? ` · ${g.responsable}` : ""}
@@ -589,7 +597,14 @@ export default function DashboardPage() {
               {mayoresGastos.map((g) => (
                 <div key={g.id} className="flex justify-between items-center gap-2 text-[13px]">
                   <div className="min-w-0">
-                    <div className="truncate">{g.descripcion}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate">{g.descripcion}</span>
+                      {g.beneficiario && (
+                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--red-bg)] text-[var(--red)] font-semibold text-[10px]">
+                          100% {g.beneficiario}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-[var(--ink-soft)]">
                       {new Date(g.fecha + "T00:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short" })}
                       {g.responsable ? ` · ${g.responsable}` : ""}
