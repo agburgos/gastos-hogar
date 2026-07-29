@@ -72,13 +72,15 @@ export default function DetallePage() {
     const mesInicioStr = mesInicio.toISOString().slice(0, 10);
     const mesFinStr = mesFin.toISOString().slice(0, 10);
 
+    const { data: usuariosData } = await supabase.from("usuarios").select("id, nombre");
+    const nombrePorId = new Map((usuariosData || []).map((u: any) => [u.id, u.nombre]));
+
     const { data } = await supabase
       .from("gastos")
       .select(
         `
-        id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total,
-        categorias ( nombre, categorias_macro ( nombre ) ),
-        responsable:responsable_id ( nombre )
+        id, monto, es_abono, descripcion, fecha, categoria_id, ambito, cuota_numero, cuota_total, responsable_id,
+        categorias ( nombre, categorias_macro ( nombre ) )
       `
       )
       .gte("fecha", mesInicioStr)
@@ -95,7 +97,7 @@ export default function DetallePage() {
       categoria: g.categorias?.nombre || "Sin categoría",
       categoria_id: g.categoria_id,
       ambito: g.ambito || "ninguno",
-      responsable: g.responsable?.nombre || "Desconocido",
+      responsable: nombrePorId.get(g.responsable_id) || "Desconocido",
       cuota_numero: g.cuota_numero ?? null,
       cuota_total: g.cuota_total ?? null,
     }));

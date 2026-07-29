@@ -88,14 +88,16 @@ export default function GastosPage() {
     const mesInicio = new Date(año, mesIdx, 1);
     const mesFin = new Date(año, mesIdx + 1, 1);
 
+    // Nombres de usuarios por separado (evita el embed de doble-FK, frágil ante caché de esquema)
+    const { data: usuariosData } = await supabase.from("usuarios").select("id, nombre");
+    const nombrePorId = new Map((usuariosData || []).map((u: any) => [u.id, u.nombre]));
+
     const { data } = await supabase
       .from("gastos")
       .select(
         `
         id, monto, descripcion, fecha, compartido, recurrente, es_abono, ambito, categoria_id, cuota_numero, cuota_total, responsable_id, beneficiario_id,
-        categorias ( nombre, categorias_macro ( nombre ) ),
-        responsable:responsable_id ( nombre ),
-        beneficiario:beneficiario_id ( nombre )
+        categorias ( nombre, categorias_macro ( nombre ) )
       `
       )
       .gte("fecha", mesInicio.toISOString().slice(0, 10))
@@ -114,12 +116,12 @@ export default function GastosPage() {
       categoria_id: g.categoria_id,
       categoria_nombre: g.categorias?.nombre || "Sin categoría",
       macro_nombre: g.categorias?.categorias_macro?.nombre || "Sin clasificar",
-      responsable_nombre: g.responsable?.nombre || "Desconocido",
+      responsable_nombre: nombrePorId.get(g.responsable_id) || "Desconocido",
       cuota_numero: g.cuota_numero ?? null,
       cuota_total: g.cuota_total ?? null,
       beneficiario_nombre:
         g.beneficiario_id && g.beneficiario_id !== g.responsable_id
-          ? g.beneficiario?.nombre || null
+          ? nombrePorId.get(g.beneficiario_id) || null
           : null,
     }));
 

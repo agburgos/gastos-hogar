@@ -358,9 +358,12 @@ export default function DashboardPage() {
       setCuotasResumen(resumenCuotas);
 
       // Últimos y mayores gastos del mes (excluye abonos, que no son gasto)
+      const { data: usuariosData } = await supabase.from("usuarios").select("id, nombre");
+      const nombrePorId = new Map((usuariosData || []).map((u: any) => [u.id, u.nombre]));
+
       const { data: gastosMes } = await supabase
         .from("gastos")
-        .select("id, descripcion, monto, fecha, created_at, es_abono, responsable:responsable_id ( nombre )")
+        .select("id, descripcion, monto, fecha, created_at, es_abono, responsable_id")
         .gte("fecha", mesInicioStr)
         .lt("fecha", mesFinStr)
         .eq("es_abono", false);
@@ -370,7 +373,7 @@ export default function DashboardPage() {
         descripcion: g.descripcion || "Sin título",
         monto: g.monto,
         fecha: g.fecha,
-        responsable: g.responsable?.nombre || "",
+        responsable: nombrePorId.get(g.responsable_id) || "",
       }));
 
       const ultimos = [...(gastosMes || [])]
@@ -381,7 +384,7 @@ export default function DashboardPage() {
           descripcion: g.descripcion || "Sin título",
           monto: g.monto,
           fecha: g.fecha,
-          responsable: g.responsable?.nombre || "",
+          responsable: nombrePorId.get(g.responsable_id) || "",
         }));
       setUltimosGastos(ultimos);
 
