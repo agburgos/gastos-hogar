@@ -29,10 +29,10 @@ export default function CuotaEditor({
   const [filas, setFilas] = useState<Fila[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [cuotasFaltan, setCuotasFaltan] = useState(1);
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [totalCuotas, setTotalCuotas] = useState(1);
   const [montoCuota, setMontoCuota] = useState("");
 
-  // primer día del mes actual: lo pasado (fecha < esto) ya se pagó; lo demás falta
   const hoy = new Date();
   const mesActualStr = ymdLocal(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
 
@@ -49,74 +49,93 @@ export default function CuotaEditor({
 
       const rows = (data || []) as Fila[];
       setFilas(rows);
-      const restantes = rows.filter((r) => r.fecha >= mesActualStr);
-      setCuotasFaltan(restantes.length || 1);
-      setMontoCuota(String(restantes[0]?.monto ?? rows[0]?.monto ?? ""));
+      setFechaInicio(rows[0]?.fecha ?? ymdLocal(hoy));
+      setTotalCuotas(rows.length || 1);
+      setMontoCuota(String(rows[0]?.monto ?? ""));
       setLoading(false);
     };
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
-  const pasadas = filas.filter((r) => r.fecha < mesActualStr);
-  const restantes = filas.filter((r) => r.fecha >= mesActualStr);
   const base = filas[0];
 
+  // Genera las fechas del nuevo calendario (para la vista previa)
+  const fechasNuevas = (() => {
+    if (!fechaInicio) return [];
+    const d0 = new Date(fechaInicio + "T00:00:00");
+    const out: string[] = [];
+    for (let i = 0; i < Math.max(0, totalCuotas); i++) {
+      out.push(ymdLocal(new Date(d0.getFullYear(), d0.getMonth() + i, d0.getDate())));
+    }
+    return out;
+  })();
+
   const guardar = async () => {
-    if (!base) return;
+    if (!base || !fechaInicio) return;
     setSaving(true);
     try {
       const monto = Math.round(parseFloat(montoCuota) || 0);
-      const nFaltan = Math.max(0, Math.floor(cuotasFaltan));
-      const nuevoTotal = pasadas.length + nFaltan;
+      const total = Math.max(1, Math.floor(totalCuotas));
 
-      // 1) borrar las cuotas restantes (futuras) actuales del grupo
-      const idsRestantes = restantes.map((r) => r.id);
-      if (idsRestantes.length > 0) {
-        const { error } = await supabase.from("gastos").delete().in("id", idsRestantes);
-        if (error) throw error;
-      }
+      // borrar todas las filas del grupo y recrear el calendario completo
+      const { error: delErr } = await supabase.from("gastos").delete().eq("cuota_grupo_id", grupoId);
+      if (delErr) throw delErr;
 
-      // 2) recrear nFaltan cuotas, una por mes desde el mes actual
-      if (nFaltan > 0) {
-        const dia = base.fecha.slice(8, 10);
-        const nuevas = [];
-        for (let i = 0; i < nFaltan; i++) {
-          const f = new Date(hoy.getFullYear(), hoy.getMonth() + i, parseInt(dia));
-          nuevas.push({
-            monto,
-            descripcion: base.descripcion,
-            categoria_id: base.categoria_id,
-            responsable_id: base.responsable_id,
-            ambito: base.ambito || "ninguno",
-            beneficiario_id: base.beneficiario_id,
-            fecha: ymdLocal(f),
-            compartido: true,
-            cuota_grupo_id: grupoId,
-            cuota_numero: pasadas.length + i + 1,
-            cuota_total: nuevoTotal,
-          });
-        }
-        const { error } = await supabase.from("gastos").insert(nuevas);
-        if (error) throw error;
-      }
-
-      // 3) actualizar el total en las cuotas ya pasadas (para que el X/Y cuadre)
-      if (pasadas.length > 0) {
-        const { error } = await supabase
-          .from("gastos")
-          .update({ cuota_total: nuevoTotal })
-          .in(
-            "id",
-            pasadas.map((r) => r.id)
-          );
-        if (error) throw error;
-      }
+      const nuevas = fechasNuevas.slice(0, total).map((f, i) => ({
+        monto,
+        descripcion: base.descripcion,
+        categoria_id: base.categoria_id,
+        responsable_id: base.responsable_id,
+        ambito: base.ambito || "ninguno",
+        beneficiario_id: base.beneficiario_id,
+        fecha: f,
+        compartido: true,
+        cuota_grupo_id: grupoId,
+        cuota_numero: i + 1,
+        cuota_total: total,
+      }));
+      const { error: insErr } = await supabase.from("gastos").insert(nuevas);
+      if (insErr) throw insErr;
 
       onSaved();
       onClose();
     } catch (e: any) {
       alert("Error al guardar: " + (e.message || e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancelarFaltantes = async () => {
+    // dejar solo las cuotas ya pasadas (fecha < mes actual)
+    setSaving(true);
+    try {
+      const pasadas = filas.filter((r) => r.fecha < mesActualStr);
+      const futuras = filas.filter((r) => r.fecha >= mesActualStr);
+      if (futuras.length > 0) {
+        const { error } = await supabase
+          .from("gastos")
+          .delete()
+          .in(
+            "id",
+            futuras.map((r) => r.id)
+          );
+        if (error) throw error;
+      }
+      if (pasadas.length > 0) {
+        await supabase
+          .from("gastos")
+          .update({ cuota_total: pasadas.length })
+          .in(
+            "id",
+            pasadas.map((r) => r.id)
+          );
+      }
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      alert("Error: " + (e.message || e));
     } finally {
       setSaving(false);
     }
@@ -136,28 +155,36 @@ export default function CuotaEditor({
           <>
             <div className="text-[16px] font-bold mb-1">{base.descripcion || "Cuotas"}</div>
             <div className="text-[12px] text-[var(--ink-soft)] mb-4">
-              {pasadas.length} ya pagada{pasadas.length === 1 ? "" : "s"} · {restantes.length} por pagar
+              Actualmente: {filas.length} cuota{filas.length === 1 ? "" : "s"}
             </div>
 
-            <label className="text-[13px] font-semibold block mb-1.5">Cuotas que faltan</label>
+            <label className="text-[13px] font-semibold block mb-1.5">Fecha de inicio (primera cuota)</label>
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="w-full px-3 py-2 border border-[var(--border)] rounded text-[14px] mb-4"
+            />
+
+            <label className="text-[13px] font-semibold block mb-1.5">Número de cuotas</label>
             <div className="flex items-center gap-2 mb-4">
               <button
                 type="button"
-                onClick={() => setCuotasFaltan((n) => Math.max(0, n - 1))}
+                onClick={() => setTotalCuotas((n) => Math.max(1, n - 1))}
                 className="px-3 py-2 rounded bg-[var(--accent-bg)] text-[var(--accent)] font-bold"
               >
                 −
               </button>
               <input
                 type="number"
-                min="0"
-                value={cuotasFaltan}
-                onChange={(e) => setCuotasFaltan(Math.max(0, parseInt(e.target.value) || 0))}
+                min="1"
+                value={totalCuotas}
+                onChange={(e) => setTotalCuotas(Math.max(1, parseInt(e.target.value) || 1))}
                 className="flex-1 px-3 py-2 border border-[var(--border)] rounded text-[14px] text-center"
               />
               <button
                 type="button"
-                onClick={() => setCuotasFaltan((n) => n + 1)}
+                onClick={() => setTotalCuotas((n) => n + 1)}
                 className="px-3 py-2 rounded bg-[var(--accent-bg)] text-[var(--accent)] font-bold"
               >
                 +
@@ -169,16 +196,31 @@ export default function CuotaEditor({
               type="number"
               value={montoCuota}
               onChange={(e) => setMontoCuota(e.target.value)}
-              className="w-full px-3 py-2 border border-[var(--border)] rounded text-[14px] mb-2"
+              className="w-full px-3 py-2 border border-[var(--border)] rounded text-[14px] mb-3"
             />
-            {cuotasFaltan > 0 && parseFloat(montoCuota) > 0 && (
-              <div className="text-[12px] text-[var(--ink-soft)] mb-4">
-                Total restante: {fmt(cuotasFaltan * parseFloat(montoCuota))} · nuevo total de cuotas:{" "}
-                {pasadas.length + cuotasFaltan}
+
+            {fechasNuevas.length > 0 && parseFloat(montoCuota) > 0 && (
+              <div className="text-[12px] text-[var(--ink-soft)] mb-4 bg-[var(--paper-raised)] rounded-lg p-2.5">
+                <div className="font-semibold mb-1">
+                  Quedará: {totalCuotas} cuotas de {fmt(parseFloat(montoCuota))} · total{" "}
+                  {fmt(totalCuotas * parseFloat(montoCuota))}
+                </div>
+                <div>
+                  Desde{" "}
+                  {new Date(fechasNuevas[0] + "T00:00:00").toLocaleDateString("es-CL", {
+                    month: "short",
+                    year: "numeric",
+                  })}{" "}
+                  hasta{" "}
+                  {new Date(fechasNuevas[fechasNuevas.length - 1] + "T00:00:00").toLocaleDateString("es-CL", {
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </div>
               </div>
             )}
 
-            <div className="flex flex-col gap-2 mt-4">
+            <div className="flex flex-col gap-2 mt-2">
               <button
                 onClick={guardar}
                 disabled={saving}
@@ -187,8 +229,9 @@ export default function CuotaEditor({
                 {saving ? "Guardando..." : "Guardar cambios"}
               </button>
               <button
-                onClick={() => setCuotasFaltan(0)}
-                className="w-full py-2.5 rounded-full bg-[var(--red-bg)] text-[var(--red)] font-semibold text-[13px]"
+                onClick={cancelarFaltantes}
+                disabled={saving}
+                className="w-full py-2.5 rounded-full bg-[var(--red-bg)] text-[var(--red)] font-semibold text-[13px] disabled:opacity-50"
               >
                 Cancelar las cuotas que faltan
               </button>
