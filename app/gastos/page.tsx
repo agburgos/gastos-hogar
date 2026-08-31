@@ -23,6 +23,17 @@ interface Gasto {
   beneficiario_nombre: string | null;
 }
 
+interface Macro {
+  id: string;
+  nombre: string;
+}
+
+interface Categoria {
+  id: string;
+  nombre: string;
+  macro_id: string;
+}
+
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
@@ -34,6 +45,10 @@ export default function GastosPage() {
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [persona, setPersona] = useState<"todos" | "Gloria Roa" | "Alberto Garrido">("todos");
+  const [macros, setMacros] = useState<Macro[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [macroFiltro, setMacroFiltro] = useState<string>("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [montoEdit, setMontoEdit] = useState("");
@@ -134,6 +149,24 @@ export default function GastosPage() {
     cargar();
   }, [año, mesIdx]);
 
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      const { data: macrosData } = await supabase
+        .from("categorias_macro")
+        .select("id, nombre")
+        .neq("nombre", "Sin Clasificar")
+        .order("orden");
+      setMacros(macrosData || []);
+
+      const { data: catsData } = await supabase
+        .from("categorias")
+        .select("id, nombre, macro_id")
+        .order("orden");
+      setCategorias(catsData || []);
+    };
+    cargarCategorias();
+  }, []);
+
   const cambiarMes = (delta: number) => {
     let nuevoMes = mesIdx + delta;
     let nuevoAño = año;
@@ -228,14 +261,30 @@ export default function GastosPage() {
     await cargar();
   };
 
+  const categoriasDelMacro = macroFiltro ? categorias.filter((c) => c.macro_id === macroFiltro) : [];
+
   const gastosFiltrados = gastos.filter((g) => {
     if (persona !== "todos" && g.responsable_nombre !== persona) return false;
+    if (macroFiltro && g.macro_nombre !== macros.find((m) => m.id === macroFiltro)?.nombre) return false;
+    if (categoriaFiltro && g.categoria_id !== categoriaFiltro) return false;
     if (busqueda.trim() && !norm(g.descripcion || "").includes(norm(busqueda))) return false;
     return true;
   });
 
+  // Posibles duplicados: mismo título + mismo monto + misma fecha, dentro del mes completo
+  // (no solo lo filtrado), para no perder el aviso al filtrar por persona/categoría.
+  const clavesDuplicado = new Map<string, number>();
+  gastos.forEach((g) => {
+    if (g.es_abono) return;
+    const clave = `${norm(g.descripcion || "")}|${g.monto}|${g.fecha}`;
+    clavesDuplicado.set(clave, (clavesDuplicado.get(clave) || 0) + 1);
+  });
+  const esDuplicado = (g: Gasto) =>
+    !g.es_abono && (clavesDuplicado.get(`${norm(g.descripcion || "")}|${g.monto}|${g.fecha}`) || 0) > 1;
+
   // Los abonos no son gasto (es plata entregada a la otra persona), no suman al total.
   const total = gastosFiltrados.reduce((sum, g) => sum + (g.es_abono ? 0 : g.monto), 0);
+  const totalDuplicados = gastosFiltrados.filter(esDuplicado).length;
 
   if (loading) {
     return (
@@ -287,6 +336,38 @@ export default function GastosPage() {
         ))}
       </div>
 
+      <div className="flex gap-2">
+        <select
+          value={macroFiltro}
+          onChange={(e) => {
+            setMacroFiltro(e.target.value);
+            setCategoriaFiltro("");
+          }}
+          className="flex-1 px-3 py-2 rounded-lg border border-[var(--border)] text-[13px] bg-[var(--paper)]"
+        >
+          <option value="">Todas las categorías</option>
+          {macros.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.nombre}
+            </option>
+          ))}
+        </select>
+        {macroFiltro && (
+          <select
+            value={categoriaFiltro}
+            onChange={(e) => setCategoriaFiltro(e.target.value)}
+            className="flex-1 px-3 py-2 rounded-lg border border-[var(--border)] text-[13px] bg-[var(--paper)]"
+          >
+            <option value="">Todas</option>
+            {categoriasDelMacro.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
       <input
         type="text"
         placeholder="🔍 Buscar gasto por título..."
@@ -294,12 +375,23 @@ export default function GastosPage() {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
+      {totalDuplicados > 0 && (
+        <div className="text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold">
+          ⚠ {totalDuplicados} posible{totalDuplicados > 1 ? "s" : ""} duplicado
+          {totalDuplicados > 1 ? "s" : ""} — mismo título, monto y fecha
+        </div>
+      )}
+
       {gastos.length === 0 ? (
         <Empty icon="📭" text="Sin gastos este mes" />
       ) : gastosFiltrados.length === 0 ? (
         <Empty
           icon="🔍"
-          text={busqueda.trim() ? `Sin resultados para "${busqueda}"` : "Sin gastos de esta persona este mes"}
+          text={
+            busqueda.trim()
+              ? `Sin resultados para "${busqueda}"`
+              : "Sin gastos que coincidan con los filtros"
+          }
         />
       ) : (
         <div className="bg-[var(--paper-raised)] rounded-2xl divide-y divide-[var(--rule)]">
@@ -344,6 +436,7 @@ export default function GastosPage() {
                     {g.cuota_total && g.cuota_total > 1 && (
                       <Badge color="teal">cuota {g.cuota_numero}/{g.cuota_total}</Badge>
                     )}
+                    {esDuplicado(g) && <Badge color="red">⚠ Duplicado</Badge>}
                   </div>
                   <div className="text-[12px] text-[var(--ink-soft)] mt-0.5">
                     {g.macro_nombre} › {g.categoria_nombre} · {g.responsable_nombre}
