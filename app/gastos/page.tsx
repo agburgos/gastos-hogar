@@ -192,13 +192,18 @@ export default function GastosPage() {
       alert("El título es obligatorio");
       return;
     }
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("gastos")
       .update({ monto: parseFloat(montoEdit), descripcion: descEdit })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id");
 
     if (error) {
       alert("Error al editar: " + error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      alert("No se pudo editar: la base de datos no permite modificar este gasto (permisos).");
       return;
     }
     setEditandoId(null);
@@ -207,9 +212,13 @@ export default function GastosPage() {
 
   const eliminarGasto = async (id: string) => {
     if (!confirm("¿Eliminar este gasto?")) return;
-    const { error } = await supabase.from("gastos").delete().eq("id", id);
+    const { data, error } = await supabase.from("gastos").delete().eq("id", id).select("id");
     if (error) {
       alert("Error al eliminar: " + error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      alert("No se pudo eliminar: la base de datos no permite borrar este gasto (permisos).");
       return;
     }
     await cargar();
