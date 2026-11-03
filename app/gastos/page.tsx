@@ -45,6 +45,7 @@ export default function GastosPage() {
   const [mesIdx, setMesIdx] = useState(new Date().getMonth());
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [busqueda, setBusqueda] = useState("");
+  const [soloDuplicados, setSoloDuplicados] = useState(false);
   const [persona, setPersona] = useState<"todos" | "Gloria Roa" | "Alberto Garrido">("todos");
   const [macros, setMacros] = useState<Macro[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -280,24 +281,27 @@ export default function GastosPage() {
 
   const categoriasDelMacro = macroFiltro ? categorias.filter((c) => c.macro_id === macroFiltro) : [];
 
-  const gastosFiltrados = gastos.filter((g) => {
-    if (persona !== "todos" && g.responsable_nombre !== persona) return false;
-    if (macroFiltro && g.macro_nombre !== macros.find((m) => m.id === macroFiltro)?.nombre) return false;
-    if (categoriaFiltro && g.categoria_id !== categoriaFiltro) return false;
-    if (busqueda.trim() && !norm(g.descripcion || "").includes(norm(busqueda))) return false;
-    return true;
-  });
-
   // Posibles duplicados: mismo título + mismo monto + misma fecha, dentro del mes completo
   // (no solo lo filtrado), para no perder el aviso al filtrar por persona/categoría.
+  const claveGasto = (g: Gasto) => `${norm(g.descripcion || "")}|${g.monto}|${g.fecha}`;
   const clavesDuplicado = new Map<string, number>();
   gastos.forEach((g) => {
     if (g.es_abono) return;
-    const clave = `${norm(g.descripcion || "")}|${g.monto}|${g.fecha}`;
-    clavesDuplicado.set(clave, (clavesDuplicado.get(clave) || 0) + 1);
+    clavesDuplicado.set(claveGasto(g), (clavesDuplicado.get(claveGasto(g)) || 0) + 1);
   });
-  const esDuplicado = (g: Gasto) =>
-    !g.es_abono && (clavesDuplicado.get(`${norm(g.descripcion || "")}|${g.monto}|${g.fecha}`) || 0) > 1;
+  const esDuplicado = (g: Gasto) => !g.es_abono && (clavesDuplicado.get(claveGasto(g)) || 0) > 1;
+
+  const gastosFiltrados = gastos
+    .filter((g) => {
+      if (soloDuplicados && !esDuplicado(g)) return false;
+      if (persona !== "todos" && g.responsable_nombre !== persona) return false;
+      if (macroFiltro && g.macro_nombre !== macros.find((m) => m.id === macroFiltro)?.nombre) return false;
+      if (categoriaFiltro && g.categoria_id !== categoriaFiltro) return false;
+      if (busqueda.trim() && !norm(g.descripcion || "").includes(norm(busqueda))) return false;
+      return true;
+    })
+    // Al ver solo duplicados, los dejamos juntos para compararlos de un vistazo.
+    .sort((a, b) => (soloDuplicados ? claveGasto(a).localeCompare(claveGasto(b)) : 0));
 
   // Los abonos no son gasto (es plata entregada a la otra persona), no suman al total.
   const total = gastosFiltrados.reduce((sum, g) => sum + (g.es_abono ? 0 : g.monto), 0);
@@ -401,11 +405,17 @@ export default function GastosPage() {
         </div>
       )}
 
-      {totalDuplicados > 0 && (
-        <div className="text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold">
-          ⚠ {totalDuplicados} posible{totalDuplicados > 1 ? "s" : ""} duplicado
-          {totalDuplicados > 1 ? "s" : ""} — mismo título, monto y fecha
-        </div>
+      {(totalDuplicados > 0 || soloDuplicados) && (
+        <button
+          onClick={() => setSoloDuplicados((v) => !v)}
+          className="w-full flex items-center justify-between gap-2 text-left text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold"
+        >
+          <span>
+            ⚠ {totalDuplicados} posible{totalDuplicados !== 1 ? "s" : ""} duplicado
+            {totalDuplicados !== 1 ? "s" : ""} — mismo título, monto y fecha
+          </span>
+          <span className="shrink-0 underline">{soloDuplicados ? "Ver todos" : "Ver duplicados"}</span>
+        </button>
       )}
 
       {gastos.length === 0 ? (
