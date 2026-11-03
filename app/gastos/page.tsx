@@ -297,7 +297,10 @@ export default function GastosPage() {
       if (persona !== "todos" && g.responsable_nombre !== persona) return false;
       if (macroFiltro && g.macro_nombre !== macros.find((m) => m.id === macroFiltro)?.nombre) return false;
       if (categoriaFiltro && g.categoria_id !== categoriaFiltro) return false;
-      if (busqueda.trim() && !norm(g.descripcion || "").includes(norm(busqueda))) return false;
+      if (busqueda.trim()) {
+        const texto = norm(`${g.descripcion || ""} ${g.categoria_nombre} ${g.macro_nombre}`);
+        if (!texto.includes(norm(busqueda))) return false;
+      }
       return true;
     })
     // Al ver solo duplicados, los dejamos juntos para compararlos de un vistazo.
@@ -391,7 +394,7 @@ export default function GastosPage() {
 
       <input
         type="text"
-        placeholder="🔍 Buscar gasto por título..."
+        placeholder="🔍 Buscar por título o categoría..."
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
       />
