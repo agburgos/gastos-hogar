@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, Badge, Empty } from "@/components/ui";
 import { fmt, ymdLocal, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
+import { eliminarGasto as eliminarGastoDb } from "@/lib/eliminar-gasto";
 
 interface Gasto {
   id: string;
@@ -55,6 +56,11 @@ export default function GastosPage() {
   const [descEdit, setDescEdit] = useState("");
 
   const generarRecurrentes = async () => {
+    // Solo el mes en curso: al navegar por meses pasados/futuros no se deben crear filas
+    // (antes creaba copias en cadena y reaparecían los gastos recurrentes que se borraban).
+    const hoy = new Date();
+    if (año !== hoy.getFullYear() || mesIdx !== hoy.getMonth()) return;
+
     const mesAnterior = new Date(año, mesIdx - 1, 1);
     const mesPrevioInicio = mesAnterior.toISOString().slice(0, 10);
     const mesPrevioFin = new Date(año, mesIdx, 1).toISOString().slice(0, 10);
@@ -210,15 +216,17 @@ export default function GastosPage() {
     await cargar();
   };
 
+  // Confirmación y errores dentro de la página: window.confirm/alert se pueden bloquear
+  // (navegadores, PWA, navegador interno de WhatsApp) y el botón parecería no hacer nada.
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+
   const eliminarGasto = async (id: string) => {
-    if (!confirm("¿Eliminar este gasto?")) return;
-    const { data, error } = await supabase.from("gastos").delete().eq("id", id).select("id");
-    if (error) {
-      alert("Error al eliminar: " + error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
-      alert("No se pudo eliminar: la base de datos no permite borrar este gasto (permisos).");
+    setConfirmandoId(null);
+    setAviso(null);
+    const r = await eliminarGastoDb(id);
+    if (!r.ok) {
+      setAviso(r.error || "No se pudo eliminar.");
       return;
     }
     await cargar();
@@ -384,6 +392,15 @@ export default function GastosPage() {
         onChange={(e) => setBusqueda(e.target.value)}
       />
 
+      {aviso && (
+        <div className="text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold flex justify-between gap-2">
+          <span>{aviso}</span>
+          <button onClick={() => setAviso(null)} className="shrink-0">
+            ✕
+          </button>
+        </div>
+      )}
+
       {totalDuplicados > 0 && (
         <div className="text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold">
           ⚠ {totalDuplicados} posible{totalDuplicados > 1 ? "s" : ""} duplicado
@@ -476,12 +493,32 @@ export default function GastosPage() {
                     >
                       Editar
                     </button>
-                    <button
-                      onClick={() => eliminarGasto(g.id)}
-                      className="text-[11px] px-2 py-1 rounded-full bg-[var(--red-bg)] text-[var(--red)] font-semibold"
-                    >
-                      Eliminar
-                    </button>
+                    {confirmandoId === g.id ? (
+                      <>
+                        <button
+                          onClick={() => eliminarGasto(g.id)}
+                          className="text-[11px] px-2 py-1 rounded-full bg-[var(--red)] text-white font-semibold"
+                        >
+                          Sí, eliminar
+                        </button>
+                        <button
+                          onClick={() => setConfirmandoId(null)}
+                          className="text-[11px] px-2 py-1 rounded-full bg-white/8 text-[var(--ink-soft)] font-semibold"
+                        >
+                          No
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setAviso(null);
+                          setConfirmandoId(g.id);
+                        }}
+                        className="text-[11px] px-2 py-1 rounded-full bg-[var(--red-bg)] text-[var(--red)] font-semibold"
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Card } from "@/components/ui";
 import { fmt, norm } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
+import { eliminarGasto as eliminarGastoDb } from "@/lib/eliminar-gasto";
 
 interface GastoRaw {
   id: string;
@@ -662,17 +663,18 @@ function ModalGastosCelda({
     onCambio();
   };
 
+  // Confirmación y errores dentro del modal: window.confirm/alert se pueden bloquear
+  // (navegadores, PWA, navegador interno de WhatsApp) y el botón parecería no hacer nada.
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+
   const eliminarGasto = async (id: string) => {
-    if (!confirm("¿Eliminar este gasto?")) return;
+    setConfirmandoId(null);
+    setAviso(null);
 
-    const { data, error } = await supabase.from("gastos").delete().eq("id", id).select("id");
-
-    if (error) {
-      alert("Error al eliminar: " + error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
-      alert("No se pudo eliminar: la base de datos no permite borrar este gasto (permisos).");
+    const r = await eliminarGastoDb(id);
+    if (!r.ok) {
+      setAviso(r.error || "No se pudo eliminar.");
       return;
     }
 
@@ -699,6 +701,12 @@ function ModalGastosCelda({
             ✕
           </button>
         </div>
+
+        {aviso && (
+          <div className="text-[12px] text-[var(--red)] bg-[var(--red-bg)] rounded-lg px-3 py-2 font-semibold">
+            {aviso}
+          </div>
+        )}
 
         <div className="space-y-2">
           {gastosDeLaCelda.length === 0 ? (
@@ -765,12 +773,32 @@ function ModalGastosCelda({
                     >
                       Editar
                     </button>
-                    <button
-                      onClick={() => eliminarGasto(g.id)}
-                      className="text-[11px] px-2 py-1 bg-[var(--red-bg)] text-[var(--red)] rounded font-bold"
-                    >
-                      Eliminar
-                    </button>
+                    {confirmandoId === g.id ? (
+                      <>
+                        <button
+                          onClick={() => eliminarGasto(g.id)}
+                          className="text-[11px] px-2 py-1 bg-[var(--red)] text-white rounded font-bold"
+                        >
+                          Sí, eliminar
+                        </button>
+                        <button
+                          onClick={() => setConfirmandoId(null)}
+                          className="text-[11px] px-2 py-1 bg-[var(--accent-bg)] text-[var(--mid)] rounded font-bold"
+                        >
+                          No
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setAviso(null);
+                          setConfirmandoId(g.id);
+                        }}
+                        className="text-[11px] px-2 py-1 bg-[var(--red-bg)] text-[var(--red)] rounded font-bold"
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </div>
                 </div>
               )

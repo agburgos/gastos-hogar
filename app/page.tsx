@@ -98,7 +98,9 @@ export default function DashboardPage() {
         .gte("fecha", mesPrevioInicio)
         .lt("fecha", mesPrevioFin);
 
-      if (recurrentes && recurrentes.length > 0) {
+      // Solo el mes en curso: navegar por otros meses no debe crear filas
+      const esMesEnCurso = mesSeleccionado === ymdLocal(new Date()).slice(0, 7);
+      if (esMesEnCurso && recurrentes && recurrentes.length > 0) {
         for (const gasto of recurrentes) {
           const { data: existe } = await supabase
             .from("gastos")
